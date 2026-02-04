@@ -530,10 +530,12 @@ export default function OnboardingPage() {
                       value={formData.personalInfo.gender}
                       onValueChange={(value: any) => handleInputChange('personalInfo', 'gender', value)}
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-12 py-5 border-none dark:bg-neutral-900">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent
+                       className='bg-neutral-900 border-none'
+                      >
                         <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
                         <SelectItem value="male">Male</SelectItem>
                         <SelectItem value="female">Female</SelectItem>
@@ -751,8 +753,8 @@ export default function OnboardingPage() {
                       id="policyNumber"
                       value={formData.insuranceInfo.policyNumber}
                       onChange={(e) => handleInputChange('insuranceInfo', 'policyNumber', e.target.value)}
-                      placeholder="e. border-none dark:bg-neutral-900g., BCBS123456789"
-                      className="h-12"
+                      placeholder="e.g., BCBS123456789"
+                      className="h-12 border-none dark:bg-neutral-900"
                     />
                   </div>
 
@@ -762,9 +764,9 @@ export default function OnboardingPage() {
                       id="groupNumber"
                       value={formData.insuranceInfo.groupNumber}
                       onChange={(e) => handleInputChange('insuranceInfo', 'groupNumber', e.target.value)}
-                      className="h-12"
+                      className="h-12  border-none dark:bg-neutral-900 "
                     />
-           border-none dark:bg-neutral-900        </div>
+                 </div>
                 </div>
 
                 <div className="space-y-3">
@@ -949,7 +951,8 @@ export default function OnboardingPage() {
                   <Button
                     onClick={nextStep}
                     disabled={submitting}
-                    className="gap-2"
+                   
+                    className="gap-2 bg-[#023ec8] hover:bg-blue-600"
                   >
                     Continue
                     <ChevronRight className="h-4 w-4" />

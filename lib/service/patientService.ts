@@ -1,8 +1,9 @@
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { Patient } from '@/types/user/patients';
 
 // Simple interface for onboarding
-export interface PatientData {
+/* export interface PatientData {
   uid: string;
   email: string;
   personalInfo: {
@@ -56,7 +57,7 @@ export interface PatientData {
   updatedAt: Date;
   onboardingCompleted: boolean;
 }
-
+ */
 export class PatientService {
   // Save patient profile - SIMPLE VERSION
   static async savePatientProfile(
@@ -146,7 +147,7 @@ export class PatientService {
   }
   
   // Get patient profile
-  static async getPatientProfile(uid: string): Promise<{ data: PatientData | null; error?: string }> {
+  static async getPatientProfile(uid: string): Promise<{ data: Patient | null; error?: string }> {
     try {
       const patientRef = doc(db, 'patients', uid);
       const patientDoc = await getDoc(patientRef);
@@ -155,7 +156,7 @@ export class PatientService {
         return { data: null, error: 'Profile not found' };
       }
       
-      return { data: patientDoc.data() as PatientData };
+      return { data: patientDoc.data() as Patient };
     } catch (error: any) {
       console.error('Error fetching patient profile:', error);
       return { data: null, error: error.message };
