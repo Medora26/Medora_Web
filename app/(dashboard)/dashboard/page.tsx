@@ -22,7 +22,7 @@ const Dashboard = () => {
         <Button
          variant={'default'}
         onClick={handleLogout}>
-            Logout
+            logout
         </Button>
     </div>
    </ProtectedRoute>

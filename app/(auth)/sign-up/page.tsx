@@ -138,17 +138,17 @@ const SignUp = () => {
   return (
     <AuthLayout>
       <Card className="w-full max-w-md mx-auto border-0 relative bg-none shadow-none">
-        <CardHeader className="text-center relative space-y-2">
+        <CardHeader className="text-center relative ">
           <Image
             alt='Medora Logo'
             src={LOGO.MEDORA_LOGO}
-            className='h-24 w-24 fixed -top-3 -right-2'
+            className='h-24 w-24 fixed top-1 right-0'
           />
           <CardTitle className="text-3xl md:text-4xl font-bold">
-            Join Medora
+            Smarter care with Medora
           </CardTitle>
-          <CardDescription className="text-lg">
-            Your Personal Medical Document Hub
+          <CardDescription className="text-md">
+            Create and experience intelligent health tracking.
           </CardDescription>
         </CardHeader>
 
@@ -255,31 +255,24 @@ const SignUp = () => {
 
             {/* Terms and Conditions */}
             <div className="space-y-3">
-              <div className="flex items-start">
+              <div className="flex  gap-3 items-center">
                 <input
                   type="checkbox"
                   id="terms"
                   required
                   disabled={loading}
-                  className="h-4 w-4 mt-1 text-blue-600 rounded disabled:opacity-50"
+                  className="h-4 w-4 mb-1 text-blue-600 rounded disabled:opacity-50"
                 />
-                <Label htmlFor="terms" className="ml-2 text-sm">
-                  I agree to Medora's{' '}
-                  <Link href="/terms" className="text-blue-500 hover:underline">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/privacy" className="text-blue-500 hover:underline">
-                    Privacy Policy
-                  </Link>
-                </Label>
+                <p className='font-medium text-xs'>
+                    I agree to Medora's <span className='text-blue-400 font-semibold'>Terms & Conditions </span> 
+                </p>
               </div>
             </div>
 
             {/* Register Button */}
             <Button
               type="submit"
-              className="w-full bg-[#6ecef2] text-black hover:bg-blue-600 hover:text-white py-6 text-lg disabled:opacity-50 transition-all duration-300"
+              className="w-full  bg-[#6ecef2] text-black hover:bg-blue-600 hover:text-white py-4 text-md disabled:opacity-50 transition-all duration-300"
               disabled={loading}
             >
               {loading ? (
@@ -298,7 +291,7 @@ const SignUp = () => {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-background text-gray-500">
+                <span className="px-4 bg-background ">
                   Already have an account?{' '}
                   <Link href="/sign-in" className="text-blue-400 hover:underline transform transition-all duration-200">
                     Login
@@ -310,8 +303,8 @@ const SignUp = () => {
             {/* Google Sign In Button */}
             <Button
               type="button"
-              variant="outline"
-              className="w-full py-6 disabled:opacity-50"
+              variant={'ghost'}
+              className="w-full py-4 disabled:opacity-50 "
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
             >
