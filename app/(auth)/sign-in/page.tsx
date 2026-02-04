@@ -12,6 +12,7 @@ import { LOGO } from '@/public/logo/logo';
 import { useRouter } from 'next/navigation';
 import { loginWithOTP, verifyOTPAndLogin, loginWithGoogle, resendOTP } from '@/lib/firebase/auth';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/auth/authContext';
 
 const SignIn = () => {
   const [step, setStep] = useState<'login' | 'otp'>('login')
@@ -26,7 +27,10 @@ const SignIn = () => {
   const [generatedOTP, setGeneratedOTP] = useState<string | null>(null) // For development display
   
   const router = useRouter()
-
+  const {user} = useAuth()
+  console.log("User", {
+     userauth: user
+  })
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -136,10 +140,10 @@ const SignIn = () => {
           <Image
             alt='Medora Logo'
             src={LOGO.MEDORA_LOGO}
-            className='h-24 w-24 fixed -top-3 -right-2'
+            className='h-24 w-24 fixed top-1 right-0'
           />
           <CardTitle className="text-3xl md:text-4xl font-bold">
-            {step === 'login' ? 'Welcome Back' : 'Enter OTP'}
+            {step === 'login' ?  `Welcome back ${user?.email}` : 'Enter OTP'}
           </CardTitle>
           <CardDescription>
             {step === 'login' ? 'Sign in to access your account' : 'Check your email for OTP'}
@@ -207,7 +211,7 @@ const SignIn = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-[#6ecef2] text-black hover:text-white hover:bg-blue-700 py-3 disabled:opacity-50"
+                className="w-full bg-[#6ecef2] text-black hover:text-white hover:bg-blue-700 py-4 disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? 'Sending OTP...' : 'Send OTP'}
@@ -224,8 +228,8 @@ const SignIn = () => {
 
               <Button
                 type="button"
-                variant="outline"
-                className="w-full py-6 disabled:opacity-50"
+                variant="ghost"
+                className="w-full py-4 disabled:opacity-50"
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || loading}
               >
