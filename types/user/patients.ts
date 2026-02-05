@@ -1,9 +1,4 @@
-export interface Patient {
-  // Make these OPTIONAL since they come from auth
-  uid?: string;
-  email?: string;
-  
-  // Rest of your fields remain the same
+export interface PatientOnboardingFormData {
   personalInfo: {
     firstName: string;
     lastName: string;
@@ -15,62 +10,53 @@ export interface Patient {
       relationship: string;
       phoneNumber: string;
     };
+    documents: DocumentItem[];
   };
-  
   medicalInfo: {
     bloodType: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown';
-    height: number;
-    weight: number;
+    height: string;
+    weight: string;
     allergies: string[];
-    currentMedications: {
+    currentMedications: Array<{
       name: string;
       dosage: string;
       frequency: string;
-    }[];
+    }>;
     chronicConditions: string[];
-    pastSurgeries: {
+    pastSurgeries: Array<{
       name: string;
-      year: number;
-    }[];
+      year: string;
+    }>;
+    documents: DocumentItem[];
   };
-  
   insuranceInfo: {
     providerName: string;
     policyNumber: string;
-    groupNumber?: string;
+    groupNumber: string;
     insuranceType: 'private' | 'employer' | 'government' | 'other';
     validUntil: string;
-    coverageDetails?: string;
+    coverageDetails: string;
+    documents: DocumentItem[];
   };
-  
   identification: {
     type: 'national-id' | 'passport' | 'driving-license';
     number: string;
     issueDate: string;
-    expiryDate?: string;
-    fileUrl?: string;
+    expiryDate: string;
+    documents: DocumentItem[];
   };
-  
-  doctorInfo?: {
-    primaryPhysician: {
-      name: string;
-      clinic: string;
-      phoneNumber: string;
-    };
-    specialists: {
-      name: string;
-      specialty: string;
-      clinic: string;
-    }[];
+  review: {
+    documents: DocumentItem[];
   };
-  
-  preferences: {
-    notifications: boolean;
-    dataSharing: boolean;
-    language: string;
-  };
-  
-  createdAt: Date;
-  updatedAt: Date;
-  onboardingCompleted: boolean;
+}
+
+export interface DocumentItem {
+  id: string;
+  type: string;
+  number: string;
+  file: File | null;
+  previewUrl: string;
+  uploadProgress: number;
+  uploadStatus: 'pending' | 'uploading' | 'completed' | 'error';
+  downloadUrl?: string;
 }
