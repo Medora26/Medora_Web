@@ -27,10 +27,7 @@ const SignIn = () => {
   const [generatedOTP, setGeneratedOTP] = useState<string | null>(null) // For development display
   
   const router = useRouter()
-  const {user} = useAuth()
-  console.log("User", {
-     userauth: user
-  })
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -143,7 +140,7 @@ const SignIn = () => {
             className='h-24 w-24 fixed top-1 right-0'
           />
           <CardTitle className="text-3xl md:text-4xl font-bold">
-            {step === 'login' ?  `Welcome back ${user?.email}` : 'Enter OTP'}
+            {step === 'login' ?  `Welcome back` : 'Enter OTP'}
           </CardTitle>
           <CardDescription>
             {step === 'login' ? 'Sign in to access your account' : 'Check your email for OTP'}
