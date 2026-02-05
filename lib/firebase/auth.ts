@@ -12,15 +12,107 @@ import {
   GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "./config";
-import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "./config";
-import { OTPData ,AuthUser} from "@/types/auth/auth-layout/types";
-
-
+import { OTPData, AuthUser } from "@/types/auth/auth-layout/types";
 
 // Generate 6-digit OTP
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// ========== USER DATA MANAGEMENT FUNCTIONS ==========
+
+// Store/Update user data in Firestore
+async function storeUserData(
+  uid: string,
+  email: string,
+  username: string,
+  emailVerified: boolean = false,
+  hasCompletedOnboarding: boolean = false
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("💾 Storing/updating user data for:", email);
+
+    const userData = {
+      uid,
+      email,
+      username,
+      emailVerified,
+      hasCompletedOnboarding,
+      lastLoginAt: new Date(),
+      updatedAt: new Date(),
+      createdAt: new Date() // Will be updated if already exists
+    };
+
+    // Check if user already exists
+    const userDocRef = doc(db, "users", uid);
+    const existingUser = await getDoc(userDocRef);
+
+    if (existingUser.exists()) {
+      // Update existing user
+      await updateDoc(userDocRef, {
+        lastLoginAt: new Date(),
+        updatedAt: new Date(),
+        emailVerified
+      });
+      console.log("✅ User data updated in Firestore");
+    } else {
+      // Create new user document
+      await setDoc(userDocRef, userData);
+      console.log("✅ User data created in Firestore");
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Error storing user data:", error);
+    
+    // Check if it's a permission error
+    if (error.code === 'permission-denied') {
+      console.warn("⚠️ Firestore permission denied for user data.");
+    }
+    
+    return { success: false, error: "Failed to store user data" };
+  }
+}
+
+// Get user data from Firestore
+export async function getUserData(uid: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+  try {
+    const userDocRef = doc(db, "users", uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as AuthUser;
+      console.log("📊 Retrieved user data for:", userData.email);
+      return { success: true, user: userData };
+    } else {
+      console.log("⚠️ User data not found in Firestore for uid:", uid);
+      return { success: false, error: "User data not found" };
+    }
+  } catch (error: any) {
+    console.error("❌ Error fetching user data:", error);
+    return { success: false, error: "Failed to fetch user data" };
+  }
+}
+
+// Update user onboarding status
+export async function updateUserOnboardingStatus(
+  uid: string,
+  hasCompletedOnboarding: boolean
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userDocRef = doc(db, "users", uid);
+    await updateDoc(userDocRef, {
+      hasCompletedOnboarding,
+      updatedAt: new Date()
+    });
+    console.log("✅ User onboarding status updated to:", hasCompletedOnboarding);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Error updating onboarding status:", error);
+    return { success: false, error: "Failed to update onboarding status" };
+  }
 }
 
 // ========== EMAIL FUNCTIONS ==========
@@ -114,7 +206,6 @@ async function sendOTPEmail(email: string, otp: string): Promise<{ success: bool
 
 // ========== OTP MANAGEMENT FUNCTIONS ==========
 
-// Store OTP in Firestore
 // Store OTP in Firestore
 async function storeOTP(email: string, uid: string, otp: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -216,9 +307,9 @@ async function verifyStoredOTP(email: string, otp: string): Promise<{ success: b
   }
 }
 
-// ========== SIMPLE AUTH FUNCTIONS ==========
+// ========== UPDATED AUTH FUNCTIONS ==========
 
-// Simple sign up - Only creates Firebase Auth user
+// Simple sign up - Creates Firebase Auth user AND stores in Firestore
 export async function signUpUser(
   email: string,
   password: string,
@@ -243,6 +334,19 @@ export async function signUpUser(
       displayName: username,
     });
     
+    // Store user data in Firestore
+    const storeResult = await storeUserData(
+      user.uid,
+      user.email!,
+      username,
+      user.emailVerified,
+      false // hasCompletedOnboarding
+    );
+    
+    if (!storeResult.success) {
+      console.warn("⚠️ Failed to store user data in Firestore, but auth user was created");
+    }
+    
     // Send email verification
     try {
       await sendEmailVerification(user);
@@ -251,11 +355,12 @@ export async function signUpUser(
       console.warn("⚠️ Email verification failed:", emailError);
     }
     
-    // Create simple user data
+    // Create user data object
     const userData: AuthUser = {
       uid: user.uid,
       email: user.email!,
       username,
+      displayName: username,
       createdAt: new Date(),
       hasCompletedOnboarding: false,
       emailVerified: user.emailVerified
@@ -389,7 +494,7 @@ export async function loginWithOTP(
   }
 }
 
-// Verify OTP and login
+// Verify OTP and login - UPDATED to store user data
 export async function verifyOTPAndLogin(
   email: string,
   password: string,
@@ -397,6 +502,7 @@ export async function verifyOTPAndLogin(
 ): Promise<{ 
   success: boolean; 
   user?: User;
+  authUser?: AuthUser;
   needsOnboarding?: boolean;
   error?: string 
 }> {
@@ -419,15 +525,29 @@ export async function verifyOTPAndLogin(
     
     console.log("✅ User signed in:", user.uid);
     
+    // Store/update user data in Firestore
+    const username = user.displayName || email.split('@')[0];
+    await storeUserData(
+      user.uid,
+      user.email!,
+      username,
+      user.emailVerified,
+      false // Will check onboarding status below
+    );
+    
     // Check if user has completed onboarding
     const userDoc = await getDoc(doc(db, "patients", user.uid));
     const hasCompletedOnboarding = userDoc.exists();
     
     console.log("📊 Onboarding status:", hasCompletedOnboarding ? "Completed" : "Not completed");
     
+    // Get user data from Firestore
+    const userDataResult = await getUserData(user.uid);
+    
     return {
       success: true,
       user,
+      authUser: userDataResult.user,
       needsOnboarding: !hasCompletedOnboarding
     };
     
@@ -449,10 +569,11 @@ export async function verifyOTPAndLogin(
   }
 }
 
-// Google login
+// Google login - UPDATED to store user data
 export async function loginWithGoogle(): Promise<{ 
   success: boolean; 
   user?: User;
+  authUser?: AuthUser;
   needsOnboarding?: boolean;
   error?: string 
 }> {
@@ -462,13 +583,27 @@ export async function loginWithGoogle(): Promise<{
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
     
+    // Store/update user data in Firestore
+    const username = user.displayName || user.email!.split('@')[0];
+    await storeUserData(
+      user.uid,
+      user.email!,
+      username,
+      user.emailVerified,
+      false // Will check onboarding status below
+    );
+    
     // Check if user has completed onboarding
     const userDoc = await getDoc(doc(db, "patients", user.uid));
     const hasCompletedOnboarding = userDoc.exists();
     
+    // Get user data from Firestore
+    const userDataResult = await getUserData(user.uid);
+    
     return {
       success: true,
       user,
+      authUser: userDataResult.user,
       needsOnboarding: !hasCompletedOnboarding
     };
     
@@ -477,6 +612,79 @@ export async function loginWithGoogle(): Promise<{
     
     if (error.code === 'auth/popup-closed-by-user') {
       errorMessage = "Sign-in was cancelled.";
+    }
+    
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Direct email/password login - NEW function
+export async function directLogin(
+  email: string,
+  password: string
+): Promise<{ 
+  success: boolean; 
+  user?: User;
+  authUser?: AuthUser;
+  needsOnboarding?: boolean;
+  error?: string 
+}> {
+  try {
+    console.log("🔐 Direct login for:", email);
+    
+    // Sign in with credentials
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    console.log("✅ User signed in:", user.uid);
+    
+    // Store/update user data in Firestore
+    const username = user.displayName || email.split('@')[0];
+    await storeUserData(
+      user.uid,
+      user.email!,
+      username,
+      user.emailVerified,
+      false // Will check onboarding status below
+    );
+    
+    // Check if user has completed onboarding
+    const userDoc = await getDoc(doc(db, "patients", user.uid));
+    const hasCompletedOnboarding = userDoc.exists();
+    
+    console.log("📊 Onboarding status:", hasCompletedOnboarding ? "Completed" : "Not completed");
+    
+    // Get user data from Firestore
+    const userDataResult = await getUserData(user.uid);
+    
+    return {
+      success: true,
+      user,
+      authUser: userDataResult.user,
+      needsOnboarding: !hasCompletedOnboarding
+    };
+    
+  } catch (error: any) {
+    console.error("❌ Direct login error:", error);
+    
+    let errorMessage = "Login failed. Please check your credentials.";
+    
+    switch (error.code) {
+      case "auth/invalid-credential":
+        errorMessage = "Invalid email or password.";
+        break;
+      case "auth/user-not-found":
+        errorMessage = "No account found with this email.";
+        break;
+      case "auth/wrong-password":
+        errorMessage = "Incorrect password.";
+        break;
+      case "auth/too-many-requests":
+        errorMessage = "Too many attempts. Please try again later.";
+        break;
+      case "auth/user-disabled":
+        errorMessage = "This account has been disabled.";
+        break;
     }
     
     return { success: false, error: errorMessage };
@@ -529,9 +737,17 @@ export async function resendOTP(email: string, password: string): Promise<{
   }
 }
 
-// Check auth state
-export function setupAuthListener(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+// Auth listener with user data
+export function setupAuthListener(callback: (user: User | null, authUser?: AuthUser) => void) {
+  return onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // Get additional user data from Firestore
+      const userDataResult = await getUserData(user.uid);
+      callback(user, userDataResult.user);
+    } else {
+      callback(null);
+    }
+  });
 }
 
 // Sign out
@@ -544,9 +760,24 @@ export async function signOutUser() {
   }
 }
 
+// Get current user with Firestore data
+export async function getCurrentUserWithData(): Promise<{ 
+  user: User | null; 
+  authUser?: AuthUser 
+}> {
+  const user = auth.currentUser;
+  if (!user) {
+    return { user: null };
+  }
+  
+  const userDataResult = await getUserData(user.uid);
+  return { 
+    user, 
+    authUser: userDataResult.user 
+  };
+}
+
 // Get current user
 export function getCurrentUser(): User | null {
   return auth.currentUser;
 }
-
-
