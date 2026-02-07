@@ -10,23 +10,27 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import Image from 'next/image';
 import { LOGO } from '@/public/logo/logo';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { loginWithGoogle, signUpUser } from '@/lib/firebase/auth';
+import { useRouter } from 'next/navigation';
+import {
+  signUpUser,
+  loginWithGoogle,
+  directLogin
+} from '@/lib/firebase/auth'; // Updated import path
 
 const SignUp = () => {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [passwordShow, setPasswordShow] = useState(false)
   const [formData, setFormData] = useState({
-    username: '',
+    fullname: '',
     email: '',
     password: '',
     confirmPassword: ''
   })
-  const router = useRouter()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -44,7 +48,7 @@ const SignUp = () => {
       return false
     }
     
-    if (formData.password.length < 6) {
+    if (formData.password.length < 6) { // Firebase requires min 6 chars
       setError("Password must be at least 6 characters long")
       return false
     }
@@ -55,86 +59,158 @@ const SignUp = () => {
       return false
     }
     
+    if (formData.fullname.length < 2) {
+      setError("Please enter your full name")
+      return false
+    }
+    
+    if (formData.fullname.length > 255) {
+      setError("Full name must be less than 255 characters")
+      return false
+    }
+    
     return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    if(!validateForm()) {
-      return
+    if (!validateForm()) {
+      return;
     }
 
-    setLoading(true)
-    setError(null)
-    setSuccess(null)
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
     try {
+      console.log('Attempting Firebase signup with:', {
+        email: formData.email,
+        fullname: formData.fullname
+      });
+
+      // Use Firebase signUpUser function
       const result = await signUpUser(
         formData.email,
         formData.password,
-        formData.username
-      )
+        formData.fullname
+      );
 
-      if(result.success) {
-        toast.success("Account Created Successfully!")
-        setSuccess("✅ Account created! Please check your email for verification.")
+      console.log('Signup result:', result);
+
+      if (result.success && result.user) {
+        setSuccess("Account created successfully! Please check your email to verify your account.");
+        toast.success("Welcome to Medora!");
         
-        // Clear form 
+        // Note: Firebase automatically sends verification email in signUpUser function
+        
+        // Clear form
         setFormData({
-          username: "",
-          email: "",
-          password: "",
-          confirmPassword: ""
-        })
+          fullname: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
 
-        // Redirect to sign-in after 2 seconds
-        setTimeout(() => {
-          window.location.href = '/sign-in'
-        }, 2000)
+        // Try auto-login after signup
+        try {
+          const loginResult = await directLogin(formData.email, formData.password);
+          
+          if (loginResult.success) {
+            toast.success("Account created and logged in!");
+            
+            // Check if user needs onboarding
+            if (loginResult.needsOnboarding) {
+              setTimeout(() => {
+                router.push('/onboarding');
+              }, 2000);
+            } else {
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 2000);
+            }
+          } else {
+            console.log("Auto-login failed, redirecting to sign-in");
+            toast.info("Please sign in with your new account");
+            
+            setTimeout(() => {
+              router.push('/sign-in');
+            }, 3000);
+          }
+
+        } catch (loginError) {
+          console.log("Auto-login error, redirecting to sign-in:", loginError);
+          
+          setTimeout(() => {
+            router.push('/sign-in');
+          }, 3000);
+        }
 
       } else {
-        toast.error("Registration Failed")
-        setError(result.error || "Registration failed. Please try again.")
-        setLoading(false)
+        throw new Error(result.error || "Registration failed");
       }
+
     } catch (error: any) {
-      setError("An unexpected error occurred")
-      toast.error("An unexpected error occurred")
-      setLoading(false)
+      console.error('Sign up error:', error);
+      
+      // Handle specific Firebase error cases
+      if (error.message.includes('already registered') || 
+          error.message.includes('already exists') ||
+          error.message.includes('email already') ||
+          error.message.includes('email-already-in-use')) {
+        setError("An account with this email already exists. Please sign in instead.");
+      } else if (error.message.includes('Invalid email')) {
+        setError("Please enter a valid email address.");
+      } else if (error.message.includes('password') || error.message.includes('weak-password')) {
+        setError("Password should be at least 6 characters long.");
+      } else if (error.message.includes('rate limit') || error.message.includes('too-many-requests')) {
+        setError("Too many attempts. Please try again later.");
+      } else {
+        setError(error.message || "An error occurred during sign up");
+      }
+      
+      toast.error("Sign up failed");
+    } finally {
+      setLoading(false);
     }
   }
 
   const handleGoogleSignIn = async () => {
-    setGoogleLoading(true)
-    setError(null)
+    setGoogleLoading(true);
+    setError(null);
+    toast.info("Signing in with Google...");
 
     try {
-      const result = await loginWithGoogle()
-
-      if(result.success) {
-        toast.success("Signed in with Google!")
+      // Firebase Google OAuth
+      const result = await loginWithGoogle();
+      
+      if (result.success && result.user) {
+        toast.success("Signed in with Google!");
         
-        // Redirect based on onboarding status
-        setTimeout(() => {
-          if(result.needsOnboarding) {
-            window.location.href = '/onboarding'
-          } else {
-            window.location.href = '/dashboard'
-          }
-        }, 1000)
-        
+        // Check if user needs onboarding
+        if (result.needsOnboarding) {
+          router.push('/onboarding');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
-        toast.error("Google sign-in failed")
-        setError(result.error || "Google sign-in failed")
-        setGoogleLoading(false)
+        throw new Error(result.error || "Google sign-in failed");
       }
+      
     } catch (error: any) {
-      toast.error("An unexpected error occurred")
-      setError("An unexpected error occurred")
-      setGoogleLoading(false)
+      console.error('Google sign-in error:', error);
+      
+      if (error.message.includes('cancelled') || error.message.includes('popup-closed')) {
+        setError("Sign-in was cancelled.");
+      } else {
+        setError(error.message || "Failed to sign in with Google");
+        toast.error("Google sign-in failed");
+      }
+      
+      setGoogleLoading(false);
     }
   }
+
   return (
     <AuthLayout>
       <Card className="w-full max-w-md mx-auto border-0 relative bg-none shadow-none">
@@ -169,22 +245,23 @@ const SignUp = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Simple Form - Only 3 fields */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium">
+                <Label htmlFor="fullname" className="text-sm font-medium">
                   Full Name *
                 </Label>
                 <Input
-                  id="username"
+                  id="fullname"
                   type="text"
-                  value={formData.username}
+                  value={formData.fullname}
                   required
                   disabled={loading}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
                   className="w-full py-6 border-none bg-neutral-900"
+                  maxLength={255}
                 />
+                <p className="text-xs text-gray-500">Maximum 255 characters</p>
               </div>
              
               <div className="space-y-2">
@@ -232,6 +309,7 @@ const SignUp = () => {
                     )}
                   </button>
                 </div>
+                <p className="text-xs text-gray-500">Minimum 6 characters (Firebase requirement)</p>
               </div>
 
               <div className="space-y-2">
@@ -253,9 +331,8 @@ const SignUp = () => {
               </div>
             </div>
 
-            {/* Terms and Conditions */}
             <div className="space-y-3">
-              <div className="flex  gap-3 items-center">
+              <div className="flex gap-3 items-center">
                 <input
                   type="checkbox"
                   id="terms"
@@ -264,15 +341,14 @@ const SignUp = () => {
                   className="h-4 w-4 mb-1 text-blue-600 rounded disabled:opacity-50"
                 />
                 <p className='font-medium text-xs'>
-                    I agree to Medora's <span className='text-blue-400 font-semibold'>Terms & Conditions </span> 
+                  I agree to Medora's <span className='text-blue-400 font-semibold'>Terms & Conditions</span> 
                 </p>
               </div>
             </div>
 
-            {/* Register Button */}
             <Button
               type="submit"
-              className="w-full  bg-[#6ecef2] text-black hover:bg-blue-600 hover:text-white py-4 text-md disabled:opacity-50 transition-all duration-300"
+              className="w-full bg-[#6ecef2] text-black hover:bg-blue-600 hover:text-white py-4 text-md disabled:opacity-50 transition-all duration-300"
               disabled={loading}
             >
               {loading ? (
@@ -285,7 +361,6 @@ const SignUp = () => {
               )}
             </Button>
 
-            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
@@ -293,18 +368,20 @@ const SignUp = () => {
               <div className="relative flex justify-center text-sm">
                 <span className="px-4 bg-background ">
                   Already have an account?{' '}
-                  <Link href="/sign-in" className="text-blue-400 hover:underline transform transition-all duration-200">
+                  <Link 
+                    href="/sign-in" 
+                    className="text-blue-400 hover:underline transform transition-all duration-200 hover:text-blue-300"
+                  >
                     Login
                   </Link>
                 </span>
               </div>
             </div>
 
-            {/* Google Sign In Button */}
             <Button
               type="button"
               variant={'ghost'}
-              className="w-full py-4 disabled:opacity-50 "
+              className="w-full py-4 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
             >
@@ -325,8 +402,10 @@ const SignUp = () => {
                 </>
               )}
             </Button>
-            
-          
+
+            <div className="text-center text-xs text-gray-500">
+              <p>By signing up, you agree to our Privacy Policy and Terms of Service.</p>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -334,4 +413,4 @@ const SignUp = () => {
   )
 }
 
-export default SignUp
+export default SignUp;
