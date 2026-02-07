@@ -9,7 +9,8 @@ import {
   User,
   sendEmailVerification,
   signInWithPopup,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  sendPasswordResetEmail // Added this import
 } from "firebase/auth";
 import { auth } from "./config";
 import { doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -734,6 +735,33 @@ export async function resendOTP(email: string, password: string): Promise<{
   } catch (error: any) {
     console.error("❌ Resend OTP error:", error);
     return { success: false, error: "Failed to resend OTP" };
+  }
+}
+
+// Password reset function
+export async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    console.log("✅ Password reset email sent to:", email);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Password reset error:", error);
+    
+    let errorMessage = "Failed to send password reset email";
+    
+    switch (error.code) {
+      case "auth/user-not-found":
+        errorMessage = "No account found with this email.";
+        break;
+      case "auth/invalid-email":
+        errorMessage = "Please enter a valid email address.";
+        break;
+      case "auth/too-many-requests":
+        errorMessage = "Too many attempts. Please try again later.";
+        break;
+    }
+    
+    return { success: false, error: errorMessage };
   }
 }
 
