@@ -16,7 +16,7 @@ import {
   signUpUser,
   loginWithGoogle,
   directLogin
-} from '@/lib/firebase/auth'; // Updated import path
+} from '@/lib/firebase/service/auth'; // Updated import path
 
 const SignUp = () => {
   const router = useRouter();
@@ -220,7 +220,7 @@ const SignUp = () => {
             src={LOGO.MEDORA_LOGO}
             className='h-24 w-24 fixed top-1 right-0'
           />
-          <CardTitle className="text-3xl md:text-4xl font-bold">
+          <CardTitle className="text-3xl md:text-xl font-bold">
             Smarter care with Medora
           </CardTitle>
           <CardDescription className="text-md">
@@ -380,7 +380,7 @@ const SignUp = () => {
 
             <Button
               type="button"
-              variant={'ghost'}
+              variant={'outline'}
               className="w-full py-4 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
@@ -403,9 +403,7 @@ const SignUp = () => {
               )}
             </Button>
 
-            <div className="text-center text-xs text-gray-500">
-              <p>By signing up, you agree to our Privacy Policy and Terms of Service.</p>
-            </div>
+           
           </form>
         </CardContent>
       </Card>

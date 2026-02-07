@@ -12,9 +12,9 @@ import {
   GoogleAuthProvider,
   sendPasswordResetEmail // Added this import
 } from "firebase/auth";
-import { auth } from "./config";
+import { auth } from "../config";
 import { doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
-import { db } from "./config";
+import { db } from "../config";
 import { OTPData, AuthUser } from "@/types/auth/auth-layout/types";
 
 // Generate 6-digit OTP

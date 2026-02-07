@@ -1,8 +1,7 @@
 'use client';
-
+import {nanoid} from "nanoid"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PatientService } from '@/lib/service/patientService'
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -13,14 +12,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, ChevronRight, ChevronLeft, User as UserIcon, FileText, Stethoscope, Shield, IdCard, Upload, X, Eye } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  ChevronRight, 
+  ChevronLeft, 
+  User as UserIcon, 
+  FileText, 
+  Stethoscope, 
+  Shield, 
+  IdCard, 
+  Upload, 
+  X, 
+  Eye,
+  Plus,
+  Trash2,
+  Calendar,
+  Scale,
+  Droplets,
+  Pill,
+  Heart,
+  BriefcaseMedical,
+  FilePlus
+} from 'lucide-react';
 import { useAuth } from '@/context/auth/authContext';
-import { storage } from '@/lib/firebase/config';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DocumentItem, PatientOnboardingFormData } from '@/types/user/patients';
-
-// Define form data structure with documents
-
+import { PatientService } from '@/lib/firebase/service/patients/service';
+import { uploadToCloudinary } from '@/lib/cloudinary/cloudinary-util';
 
 // Document types for each step
 const documentTypes = {
@@ -60,40 +77,14 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
+ /*  const [user, setUser] = useState<User | null>(null); */
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
-  const { user: userdata } = useAuth();
-  //drag events
-  const [dragActive, setDragActive] = useState(false)
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
     
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true)
-    } else if (e.type === 'dragleave') {
-      setDragActive(false)
-    }
-  }
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    
-    const files = e.dataTransfer.files
-   
-   
-  }
+  const [dragActive, setDragActive] = useState(false);
 
- 
-
- const openFileSelector = (colorName: string) => {
-    
-  }
   // Initialize form data with documents
   const [formData, setFormData] = useState<PatientOnboardingFormData>({
     personalInfo: {
@@ -195,7 +186,7 @@ export default function OnboardingPage() {
   ];
 
   // Check auth state
-  useEffect(() => {
+/*   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -213,8 +204,11 @@ export default function OnboardingPage() {
     });
 
     return () => unsubscribe();
-  }, [router]);
-
+  }, [router]); */
+const { user, refreshOnboardingStatus, loading: authLoading } = useAuth();
+console.log("UserState",{
+     userData: user
+})
   // Get current step documents
   const getCurrentStepDocuments = () => {
     switch (currentStep) {
@@ -239,53 +233,119 @@ export default function OnboardingPage() {
   };
 
   // Add document to current step
-  const addDocument = () => {
-    if (!newDocument.type || !newDocument.number) {
-      setError('Document type and number are required');
-      return;
-    }
+// Add document to current step - FIXED VERSION
+const addDocument = (e?: React.MouseEvent) => {
+  // Prevent default behavior and stop propagation
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-    if (getCurrentStepDocuments().length >= MAX_DOCUMENTS_PER_STEP) {
-      setError(`Maximum ${MAX_DOCUMENTS_PER_STEP} documents allowed per section`);
-      return;
-    }
+  // Early returns for validation
+  if (!newDocument.type || !newDocument.number) {
+    setError('Document type and number are required');
+    return;
+  }
 
-    const doc: DocumentItem = {
-      id: Date.now().toString(),
-      type: newDocument.type,
-      number: newDocument.number,
-      file: newDocument.file,
-      previewUrl: newDocument.previewUrl,
-      uploadProgress: 0,
-      uploadStatus: 'pending'
-    };
+  if (getCurrentStepDocuments().length >= MAX_DOCUMENTS_PER_STEP) {
+    setError(`Maximum ${MAX_DOCUMENTS_PER_STEP} documents allowed per section`);
+    return;
+  }
 
-    const updateFormData = (prev: PatientOnboardingFormData) => {
-      const update = { ...prev };
-      switch (currentStep) {
-        case 0:
-          update.personalInfo.documents = [...prev.personalInfo.documents, doc];
-          break;
-        case 1:
-          update.medicalInfo.documents = [...prev.medicalInfo.documents, doc];
-          break;
-        case 2:
-          update.insuranceInfo.documents = [...prev.insuranceInfo.documents, doc];
-          break;
-        case 3:
-          update.identification.documents = [...prev.identification.documents, doc];
-          break;
-        case 4:
-          update.review.documents = [...prev.review.documents, doc];
-          break;
-      }
-      return update;
-    };
-
-    setFormData(prev => updateFormData(prev));
-    setNewDocument({ type: '', number: '', file: null, previewUrl: '' });
-    setError('');
+  // Create the document with a truly unique ID
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  const docId = `doc_${timestamp}_${random}_${currentStep}`; // Add currentStep to make it more unique
+  
+  const newDoc: DocumentItem = {
+    id: docId,
+    type: newDocument.type,
+    number: newDocument.number,
+    file: newDocument.file,
+    previewUrl: newDocument.previewUrl,
+    uploadProgress: 0,
+    uploadStatus: 'pending'
   };
+
+  // Debug log
+  console.log('Adding document:', { 
+    id: docId, 
+    type: newDoc.type, 
+    number: newDoc.number,
+    step: currentStep,
+    existingDocs: getCurrentStepDocuments().length 
+  });
+
+  // Update form data using functional update
+  setFormData(prev => {
+    // Check for duplicates inside the setState function to ensure we have latest state
+    const currentDocs = getCurrentStepDocumentsFromState(prev);
+    const isDuplicate = currentDocs.some(existingDoc => 
+      existingDoc.type === newDoc.type && 
+      existingDoc.number === newDoc.number
+    );
+    
+    if (isDuplicate) {
+      console.log('Duplicate detected inside setState!');
+      return prev; // Return previous state unchanged
+    }
+    
+    const update = { ...prev };
+    
+    switch (currentStep) {
+      case 0:
+        update.personalInfo = {
+          ...prev.personalInfo,
+          documents: [...prev.personalInfo.documents, newDoc]
+        };
+        break;
+      case 1:
+        update.medicalInfo = {
+          ...prev.medicalInfo,
+          documents: [...prev.medicalInfo.documents, newDoc]
+        };
+        break;
+      case 2:
+        update.insuranceInfo = {
+          ...prev.insuranceInfo,
+          documents: [...prev.insuranceInfo.documents, newDoc]
+        };
+        break;
+      case 3:
+        update.identification = {
+          ...prev.identification,
+          documents: [...prev.identification.documents, newDoc]
+        };
+        break;
+      case 4:
+        update.review = {
+          ...prev.review,
+          documents: [...prev.review.documents, newDoc]
+        };
+        break;
+    }
+    
+    return update;
+  });
+
+  // Clear the form
+  setNewDocument({ type: '', number: '', file: null, previewUrl: '' });
+  setError('');
+};
+
+// Helper function to get documents from a specific state
+const getCurrentStepDocumentsFromState = (state: PatientOnboardingFormData): DocumentItem[] => {
+  switch (currentStep) {
+    case 0: return state.personalInfo.documents;
+    case 1: return state.medicalInfo.documents;
+    case 2: return state.insuranceInfo.documents;
+    case 3: return state.identification.documents;
+    case 4: return state.review.documents;
+    default: return [];
+  }
+};
+
+
 
   // Remove document
   const removeDocument = (id: string) => {
@@ -316,9 +376,61 @@ export default function OnboardingPage() {
 
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const file = e.target.files?.[0];
+  if (!file) return;
 
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    setError('File size must be less than 5MB');
+    return;
+  }
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    setError('Only JPG, PNG, and PDF files are allowed');
+    return;
+  }
+
+  const previewUrl = URL.createObjectURL(file);
+  
+  // Clear the input to prevent same file re-uploads
+  e.target.value = '';
+  
+  setNewDocument(prev => ({
+    ...prev,
+    file,
+    previewUrl
+  }));
+  setError('');
+};
+  // Handle drag events
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setDragActive(false);
+  
+  const files = e.dataTransfer.files;
+  if (files && files[0]) {
+    const file = files[0];
+    
+    // Check if we already have a file
+    if (newDocument.file) {
+      setError('Please clear the current file first');
+      return;
+    }
+    
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       setError('File size must be less than 5MB');
@@ -339,122 +451,195 @@ export default function OnboardingPage() {
       previewUrl
     }));
     setError('');
-  };
+  }
+};
 
-  // Upload document to Firebase
-  const uploadDocumentToFirebase = async (doc: DocumentItem, userId: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!doc.file) {
-        reject(new Error('No file to upload'));
-        return;
+  // Upload document to Cloudinary
+// Upload document to Cloudinary - UPDATED VERSION
+const uploadDocumentToCloudinary = async (doc: DocumentItem, userId: string): Promise<string> => {
+  try {
+    if (!doc.file) {
+      throw new Error('No file to upload');
+    }
+
+    console.log('📤 Starting Cloudinary upload for document:', {
+      id: doc.id,
+      type: doc.type,
+      fileName: doc.file.name,
+      size: doc.file.size
+    });
+
+    // Update upload status
+    updateDocumentStatus(doc.id, 'uploading', 0);
+
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(doc.file, userId);
+
+    if (!result.success || !result.url) {
+      console.error('Cloudinary upload failed:', result.error);
+      throw new Error(result.error || 'Upload failed');
+    }
+
+    console.log('✅ Cloudinary upload successful, URL:', result.url);
+
+    // Update with Cloudinary URL
+    updateDocumentWithUrl(doc.id, result.url, result.publicId);
+
+    return result.url;
+
+  } catch (error: any) {
+    console.error('❌ Error uploading to Cloudinary:', error);
+    updateDocumentStatus(doc.id, 'error', 0);
+    throw error;
+  }
+};
+
+// Upload all documents for current step
+const uploadStepDocuments = async () => {
+  if (!user) {
+    console.error('No user found for document upload');
+    return;
+  }
+
+  const currentDocs = getCurrentStepDocuments();
+  const docsToUpload = currentDocs.filter(doc => 
+    doc.file && 
+    !doc.downloadUrl && 
+    doc.uploadStatus !== 'uploading' &&
+    doc.uploadStatus !== 'completed'
+  );
+  
+  console.log('📤 Documents to upload:', {
+    total: currentDocs.length,
+    toUpload: docsToUpload.length,
+    userId: user.uid
+  });
+
+  if (docsToUpload.length === 0) {
+    console.log('✅ No documents to upload');
+    return;
+  }
+
+  setUploadingDocuments(true);
+  setError('');
+
+  try {
+    for (const doc of docsToUpload) {
+      console.log(`📤 Uploading document: ${doc.type} - ${doc.number}`);
+      await uploadDocumentToCloudinary(doc, user.uid);
+    }
+    console.log('✅ All documents uploaded successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to upload documents:', error);
+    setError(`Failed to upload documents: ${error.message}`);
+  } finally {
+    setUploadingDocuments(false);
+  }
+};
+
+  // Helper function to update document status
+  const updateDocumentStatus = (docId: string, status: 'pending' | 'uploading' | 'completed' | 'error', progress: number) => {
+    setFormData(prev => {
+      const update = { ...prev };
+      
+      const updateDocs = (docs: DocumentItem[]) => {
+        const index = docs.findIndex(d => d.id === docId);
+        if (index !== -1) {
+          docs[index] = {
+            ...docs[index],
+            uploadStatus: status,
+            uploadProgress: progress
+          };
+        }
+        return docs;
+      };
+
+      switch (currentStep) {
+        case 0:
+          update.personalInfo.documents = updateDocs(prev.personalInfo.documents);
+          break;
+        case 1:
+          update.medicalInfo.documents = updateDocs(prev.medicalInfo.documents);
+          break;
+        case 2:
+          update.insuranceInfo.documents = updateDocs(prev.insuranceInfo.documents);
+          break;
+        case 3:
+          update.identification.documents = updateDocs(prev.identification.documents);
+          break;
       }
 
-      const fileExtension = doc.file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}_${doc.type}.${fileExtension}`;
-      const storageRef = ref(storage, `documents/${fileName}`);
-      
-      const uploadTask = uploadBytesResumable(storageRef, doc.file);
+      return update;
+    });
+  };
 
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          // Update upload progress in state
-          setFormData(prev => {
-            const update = { ...prev };
-            const docs = getCurrentStepDocuments();
-            const docIndex = docs.findIndex(d => d.id === doc.id);
-            
-            if (docIndex !== -1) {
-              switch (currentStep) {
-                case 0:
-                  update.personalInfo.documents[docIndex].uploadProgress = progress;
-                  update.personalInfo.documents[docIndex].uploadStatus = 'uploading';
-                  break;
-                case 1:
-                  update.medicalInfo.documents[docIndex].uploadProgress = progress;
-                  update.medicalInfo.documents[docIndex].uploadStatus = 'uploading';
-                  break;
-                case 2:
-                  update.insuranceInfo.documents[docIndex].uploadProgress = progress;
-                  update.insuranceInfo.documents[docIndex].uploadStatus = 'uploading';
-                  break;
-                case 3:
-                  update.identification.documents[docIndex].uploadProgress = progress;
-                  update.identification.documents[docIndex].uploadStatus = 'uploading';
-                  break;
-              }
-            }
-            return update;
-          });
-        },
-        (error) => {
-          reject(error);
-        },
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            
-            // Update document with download URL
-            setFormData(prev => {
-              const update = { ...prev };
-              const docs = getCurrentStepDocuments();
-              const docIndex = docs.findIndex(d => d.id === doc.id);
-              
-              if (docIndex !== -1) {
-                switch (currentStep) {
-                  case 0:
-                    update.personalInfo.documents[docIndex].downloadUrl = downloadURL;
-                    update.personalInfo.documents[docIndex].uploadStatus = 'completed';
-                    break;
-                  case 1:
-                    update.medicalInfo.documents[docIndex].downloadUrl = downloadURL;
-                    update.medicalInfo.documents[docIndex].uploadStatus = 'completed';
-                    break;
-                  case 2:
-                    update.insuranceInfo.documents[docIndex].downloadUrl = downloadURL;
-                    update.insuranceInfo.documents[docIndex].uploadStatus = 'completed';
-                    break;
-                  case 3:
-                    update.identification.documents[docIndex].downloadUrl = downloadURL;
-                    update.identification.documents[docIndex].uploadStatus = 'completed';
-                    break;
-                }
-              }
-              return update;
-            });
-            
-            resolve(downloadURL);
-          } catch (error) {
-            reject(error);
-          }
+  // Helper function to update document with URL
+  const updateDocumentWithUrl = (docId: string, url: string, publicId?: string) => {
+    setFormData(prev => {
+      const update = { ...prev };
+      
+      const updateDocs = (docs: DocumentItem[]) => {
+        const index = docs.findIndex(d => d.id === docId);
+        if (index !== -1) {
+          docs[index] = {
+            ...docs[index],
+            downloadUrl: url,
+            uploadStatus: 'completed',
+            uploadProgress: 100
+          };
         }
-      );
+        return docs;
+      };
+
+      switch (currentStep) {
+        case 0:
+          update.personalInfo.documents = updateDocs(prev.personalInfo.documents);
+          break;
+        case 1:
+          update.medicalInfo.documents = updateDocs(prev.medicalInfo.documents);
+          break;
+        case 2:
+          update.insuranceInfo.documents = updateDocs(prev.insuranceInfo.documents);
+          break;
+        case 3:
+          update.identification.documents = updateDocs(prev.identification.documents);
+          break;
+      }
+
+      return update;
     });
   };
 
   // Upload all documents for current step
-  const uploadStepDocuments = async () => {
-    if (!user) return;
+/*  const uploadStepDocuments = async () => {
+  if (!user) return;
 
-    const currentDocs = getCurrentStepDocuments();
-    const docsToUpload = currentDocs.filter(doc => doc.file && !doc.downloadUrl);
-    
-    if (docsToUpload.length === 0) return;
+  const currentDocs = getCurrentStepDocuments();
+  const docsToUpload = currentDocs.filter(doc => 
+    doc.file && 
+    !doc.downloadUrl && 
+    doc.uploadStatus !== 'uploading' // Add this check
+  );
+  
+  if (docsToUpload.length === 0) return;
 
-    setUploadingDocuments(true);
-    setError('');
+  setUploadingDocuments(true);
+  setError('');
 
-    try {
-      for (const doc of docsToUpload) {
-        await uploadDocumentToFirebase(doc, user.uid);
-      }
-    } catch (error: any) {
-      setError(`Failed to upload documents: ${error.message}`);
-    } finally {
-      setUploadingDocuments(false);
+  try {
+    for (const doc of docsToUpload) {
+      // Mark as uploading immediately
+      updateDocumentStatus(doc.id, 'uploading', 0);
+      await uploadDocumentToCloudinary(doc, user.uid);
     }
-  };
+  } catch (error: any) {
+    setError(`Failed to upload documents: ${error.message}`);
+  } finally {
+    setUploadingDocuments(false);
+  }
+}; */
+
+
 
   // Handle input changes
   const handleInputChange = (section: keyof PatientOnboardingFormData, field: string, value: any) => {
@@ -480,6 +665,99 @@ export default function OnboardingPage() {
     }));
   };
 
+  // Medical history helper functions
+  const addAllergy = () => {
+    if (tempAllergy.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        medicalInfo: {
+          ...prev.medicalInfo,
+          allergies: [...prev.medicalInfo.allergies, tempAllergy.trim()]
+        }
+      }));
+      setTempAllergy('');
+    }
+  };
+
+  const removeAllergy = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalInfo: {
+        ...prev.medicalInfo,
+        allergies: prev.medicalInfo.allergies.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const addCondition = () => {
+    if (tempCondition.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        medicalInfo: {
+          ...prev.medicalInfo,
+          chronicConditions: [...prev.medicalInfo.chronicConditions, tempCondition.trim()]
+        }
+      }));
+      setTempCondition('');
+    }
+  };
+
+  const removeCondition = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalInfo: {
+        ...prev.medicalInfo,
+        chronicConditions: prev.medicalInfo.chronicConditions.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const addMedication = () => {
+    if (tempMedication.name.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        medicalInfo: {
+          ...prev.medicalInfo,
+          currentMedications: [...prev.medicalInfo.currentMedications, { ...tempMedication }]
+        }
+      }));
+      setTempMedication({ name: '', dosage: '', frequency: '' });
+    }
+  };
+
+  const removeMedication = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalInfo: {
+        ...prev.medicalInfo,
+        currentMedications: prev.medicalInfo.currentMedications.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const addSurgery = () => {
+    if (tempSurgery.name.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        medicalInfo: {
+          ...prev.medicalInfo,
+          pastSurgeries: [...prev.medicalInfo.pastSurgeries, { ...tempSurgery }]
+        }
+      }));
+      setTempSurgery({ name: '', year: '' });
+    }
+  };
+
+  const removeSurgery = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medicalInfo: {
+        ...prev.medicalInfo,
+        pastSurgeries: prev.medicalInfo.pastSurgeries.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
   // Navigation
   const nextStep = async () => {
     // Upload documents before proceeding to next step
@@ -501,88 +779,45 @@ export default function OnboardingPage() {
   };
 
   // Submit form
-  const handleSubmit = async () => {
-    if (!user || !user.email) {
-      setError('Please sign in first');
-      return;
+ // Submit form
+const handleSubmit = async () => {
+  if (!user || !user.email) {
+    setError('Please sign in first');
+    return;
+  }
+
+  setSubmitting(true);
+  setError('');
+
+  try {
+    // Upload any remaining documents
+    await uploadStepDocuments();
+
+    // Save profile using PatientService
+    const result = await PatientService.savePatientProfile(
+      user.uid,
+      user.email,
+      formData
+    );
+
+    if (result.success) {
+      // REFRESH onboarding status in context
+      await refreshOnboardingStatus();
+      
+      // FORCE redirect - this is most reliable
+      window.location.href = '/dashboard';
+      
+    } else {
+      setError(result.error || 'Failed to save profile');
     }
+  } catch (err: any) {
+    setError(err.message || 'An error occurred');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
-    setSubmitting(true);
-    setError('');
-
-    try {
-      // Upload any remaining documents
-      await uploadStepDocuments();
-
-      // Format data for saving
-      const formattedSurgeries = formData.medicalInfo.pastSurgeries.map(surgery => ({
-        name: surgery.name,
-        year: parseInt(surgery.year) || 0
-      }));
-
-      // Extract document URLs
-      const allDocuments = [
-        ...formData.personalInfo.documents,
-        ...formData.medicalInfo.documents,
-        ...formData.insuranceInfo.documents,
-        ...formData.identification.documents
-      ].filter(doc => doc.downloadUrl).map(doc => ({
-        type: doc.type,
-        number: doc.number,
-        url: doc.downloadUrl,
-        uploadedAt: new Date().toISOString()
-      }));
-
-      const dataToSave = {
-        personalInfo: {
-          ...formData.personalInfo,
-          documents: allDocuments.filter(doc => 
-            documentTypes.personal.some(type => type.value === doc.type)
-          )
-        },
-        medicalInfo: {
-          ...formData.medicalInfo,
-          height: parseFloat(formData.medicalInfo.height) || 0,
-          weight: parseFloat(formData.medicalInfo.weight) || 0,
-          pastSurgeries: formattedSurgeries,
-          documents: allDocuments.filter(doc => 
-            documentTypes.medical.some(type => type.value === doc.type)
-          )
-        },
-        insuranceInfo: {
-          ...formData.insuranceInfo,
-          documents: allDocuments.filter(doc => 
-            documentTypes.insurance.some(type => type.value === doc.type)
-          )
-        },
-        identification: {
-          ...formData.identification,
-          documents: allDocuments.filter(doc => 
-            documentTypes.identification.some(type => type.value === doc.type)
-          )
-        },
-        documents: allDocuments
-      };
-
-      const result = await PatientService.savePatientProfile(
-        user.uid,
-        user.email,
-        dataToSave
-      );
-
-      if (result.success) {
-        router.push('/dashboard');
-      } else {
-        setError(result.error || 'Failed to save profile');
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg animate-pulse">Loading...</div>
@@ -730,8 +965,14 @@ export default function OnboardingPage() {
                       <div
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                      className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          dragActive 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-muted-foreground/25 hover:border-primary/50'
+                        }`}
+                      >
                         <input
                           type="file"
                           id="fileUpload"
@@ -744,10 +985,10 @@ export default function OnboardingPage() {
                             <Upload className="h-8 w-8 text-muted-foreground" />
                             <div>
                               <p className="text-sm font-medium">
-                                {newDocument.file ? newDocument.file.name : 'Click to upload'}
+                                {newDocument.file ? newDocument.file.name : 'Click to upload or drag & drop'}
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Supported formats: JPG, PNG, PDF
+                                Supported formats: JPG, PNG, PDF (Max 5MB)
                               </p>
                             </div>
                           </div>
@@ -773,13 +1014,28 @@ export default function OnboardingPage() {
                     </div>
 
                     <Button
-                      onClick={addDocument}
-                      disabled={!newDocument.type || !newDocument.number || uploadingDocuments}
-                      className="w-full"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Add Document
-                    </Button>
+  type="button" // IMPORTANT: Add type="button" to prevent form submission
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Disable button temporarily to prevent double clicks
+    const button = e.currentTarget;
+    button.disabled = true;
+    
+    addDocument();
+    
+    // Re-enable after a short delay
+    setTimeout(() => {
+      button.disabled = false;
+    }, 1000);
+  }}
+  disabled={!newDocument.type || !newDocument.number || uploadingDocuments}
+  className="w-full"
+>
+  <Upload className="h-4 w-4 mr-2" />
+  Add Document
+</Button>
                   </CardContent>
                 </Card>
 
@@ -875,6 +1131,7 @@ export default function OnboardingPage() {
                       value={formData.personalInfo.firstName}
                       onChange={(e) => handleInputChange('personalInfo', 'firstName', e.target.value)}
                       placeholder="John"
+                      required
                     />
                   </div>
 
@@ -885,6 +1142,7 @@ export default function OnboardingPage() {
                       value={formData.personalInfo.lastName}
                       onChange={(e) => handleInputChange('personalInfo', 'lastName', e.target.value)}
                       placeholder="Doe"
+                      required
                     />
                   </div>
                 </div>
@@ -897,6 +1155,7 @@ export default function OnboardingPage() {
                       type="date"
                       value={formData.personalInfo.dateOfBirth}
                       onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)}
+                      required
                     />
                   </div>
 
@@ -927,6 +1186,7 @@ export default function OnboardingPage() {
                     value={formData.personalInfo.phoneNumber}
                     onChange={(e) => handleInputChange('personalInfo', 'phoneNumber', e.target.value)}
                     placeholder="+1 (555) 123-4567"
+                    required
                   />
                 </div>
 
@@ -946,6 +1206,7 @@ export default function OnboardingPage() {
                         value={formData.personalInfo.emergencyContact.name}
                         onChange={(e) => handleNestedChange('personalInfo', 'emergencyContact', 'name', e.target.value)}
                         placeholder="Jane Smith"
+                        required
                       />
                     </div>
 
@@ -956,6 +1217,7 @@ export default function OnboardingPage() {
                         value={formData.personalInfo.emergencyContact.relationship}
                         onChange={(e) => handleNestedChange('personalInfo', 'emergencyContact', 'relationship', e.target.value)}
                         placeholder="Spouse, Parent, etc."
+                        required
                       />
                     </div>
                   </div>
@@ -968,6 +1230,7 @@ export default function OnboardingPage() {
                       value={formData.personalInfo.emergencyContact.phoneNumber}
                       onChange={(e) => handleNestedChange('personalInfo', 'emergencyContact', 'phoneNumber', e.target.value)}
                       placeholder="+1 (555) 987-6543"
+                      required
                     />
                   </div>
                 </div>
@@ -1009,6 +1272,8 @@ export default function OnboardingPage() {
                       value={formData.medicalInfo.height}
                       onChange={(e) => handleInputChange('medicalInfo', 'height', e.target.value)}
                       placeholder="170"
+                      min="0"
+                      step="0.1"
                     />
                   </div>
 
@@ -1020,16 +1285,583 @@ export default function OnboardingPage() {
                       value={formData.medicalInfo.weight}
                       onChange={(e) => handleInputChange('medicalInfo', 'weight', e.target.value)}
                       placeholder="70"
+                      min="0"
+                      step="0.1"
                     />
                   </div>
                 </div>
 
-                {/* Allergies and Conditions sections (same as before) */}
-                {/* ... existing medical form content ... */}
+                {/* Allergies */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      Allergies
+                    </Label>
+                    <Badge variant="outline">
+                      {formData.medicalInfo.allergies.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      value={tempAllergy}
+                      onChange={(e) => setTempAllergy(e.target.value)}
+                      placeholder="Enter allergy (e.g., Penicillin, Peanuts)"
+                      onKeyPress={(e) => e.key === 'Enter' && addAllergy()}
+                    />
+                    <Button onClick={addAllergy} type="button">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {formData.medicalInfo.allergies.length > 0 && (
+                    <div className="space-y-2">
+                      {formData.medicalInfo.allergies.map((allergy, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <span>{allergy}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAllergy(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chronic Conditions */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <BriefcaseMedical className="h-4 w-4" />
+                      Chronic Conditions
+                    </Label>
+                    <Badge variant="outline">
+                      {formData.medicalInfo.chronicConditions.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      value={tempCondition}
+                      onChange={(e) => setTempCondition(e.target.value)}
+                      placeholder="Enter condition (e.g., Diabetes, Hypertension)"
+                      onKeyPress={(e) => e.key === 'Enter' && addCondition()}
+                    />
+                    <Button onClick={addCondition} type="button">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {formData.medicalInfo.chronicConditions.length > 0 && (
+                    <div className="space-y-2">
+                      {formData.medicalInfo.chronicConditions.map((condition, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <span>{condition}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeCondition(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Current Medications */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Pill className="h-4 w-4" />
+                      Current Medications
+                    </Label>
+                    <Badge variant="outline">
+                      {formData.medicalInfo.currentMedications.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Input
+                      value={tempMedication.name}
+                      onChange={(e) => setTempMedication(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Medication name"
+                    />
+                    <Input
+                      value={tempMedication.dosage}
+                      onChange={(e) => setTempMedication(prev => ({ ...prev, dosage: e.target.value }))}
+                      placeholder="Dosage (e.g., 10mg)"
+                    />
+                    <Input
+                      value={tempMedication.frequency}
+                      onChange={(e) => setTempMedication(prev => ({ ...prev, frequency: e.target.value }))}
+                      placeholder="Frequency (e.g., Twice daily)"
+                    />
+                  </div>
+                  
+                  <Button onClick={addMedication} type="button" className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Medication
+                  </Button>
+
+                  {formData.medicalInfo.currentMedications.length > 0 && (
+                    <div className="space-y-3">
+                      {formData.medicalInfo.currentMedications.map((med, index) => (
+                        <div key={index} className="p-4 border rounded-lg space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{med.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {med.dosage} • {med.frequency}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeMedication(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Past Surgeries */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Stethoscope className="h-4 w-4" />
+                      Past Surgeries
+                    </Label>
+                    <Badge variant="outline">
+                      {formData.medicalInfo.pastSurgeries.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Input
+                      value={tempSurgery.name}
+                      onChange={(e) => setTempSurgery(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Surgery name"
+                    />
+                    <Input
+                      value={tempSurgery.year}
+                      onChange={(e) => setTempSurgery(prev => ({ ...prev, year: e.target.value }))}
+                      placeholder="Year (e.g., 2020)"
+                      type="number"
+                      min="1900"
+                      max={new Date().getFullYear()}
+                    />
+                  </div>
+                  
+                  <Button onClick={addSurgery} type="button" className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Surgery
+                  </Button>
+
+                  {formData.medicalInfo.pastSurgeries.length > 0 && (
+                    <div className="space-y-3">
+                      {formData.medicalInfo.pastSurgeries.map((surgery, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{surgery.name}</p>
+                            <p className="text-sm text-muted-foreground">Year: {surgery.year}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSurgery(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Step 3-4 and Review steps remain similar with added document display */}
+            {/* Step 3: Insurance Information */}
+            {currentStep === 2 && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="providerName" className="text-sm font-medium">Insurance Provider *</Label>
+                    <Input
+                      id="providerName"
+                      value={formData.insuranceInfo.providerName}
+                      onChange={(e) => handleInputChange('insuranceInfo', 'providerName', e.target.value)}
+                      placeholder="ABC Insurance Company"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="insuranceType" className="text-sm font-medium">Insurance Type</Label>
+                    <Select
+                      value={formData.insuranceInfo.insuranceType}
+                      onValueChange={(value: any) => handleInputChange('insuranceInfo', 'insuranceType', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select insurance type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="private">Private</SelectItem>
+                        <SelectItem value="employer">Employer Provided</SelectItem>
+                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="policyNumber" className="text-sm font-medium">Policy Number *</Label>
+                    <Input
+                      id="policyNumber"
+                      value={formData.insuranceInfo.policyNumber}
+                      onChange={(e) => handleInputChange('insuranceInfo', 'policyNumber', e.target.value)}
+                      placeholder="POL123456789"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="groupNumber" className="text-sm font-medium">Group Number</Label>
+                    <Input
+                      id="groupNumber"
+                      value={formData.insuranceInfo.groupNumber}
+                      onChange={(e) => handleInputChange('insuranceInfo', 'groupNumber', e.target.value)}
+                      placeholder="GRP987654"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="validUntil" className="text-sm font-medium">Valid Until</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={formData.insuranceInfo.validUntil}
+                    onChange={(e) => handleInputChange('insuranceInfo', 'validUntil', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="coverageDetails" className="text-sm font-medium">Coverage Details</Label>
+                  <textarea
+                    id="coverageDetails"
+                    value={formData.insuranceInfo.coverageDetails}
+                    onChange={(e) => handleInputChange('insuranceInfo', 'coverageDetails', e.target.value)}
+                    placeholder="Enter any additional coverage information..."
+                    className="w-full min-h-[100px] p-3 border rounded-lg resize-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Identification */}
+            {currentStep === 3 && (
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <Label htmlFor="idType" className="text-sm font-medium">Identification Type *</Label>
+                  <Select
+                    value={formData.identification.type}
+                    onValueChange={(value: any) => handleInputChange('identification', 'type', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select ID type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="national-id">National ID</SelectItem>
+                      <SelectItem value="passport">Passport</SelectItem>
+                      <SelectItem value="driving-license">Driving License</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="idNumber" className="text-sm font-medium">Identification Number *</Label>
+                  <Input
+                    id="idNumber"
+                    value={formData.identification.number}
+                    onChange={(e) => handleInputChange('identification', 'number', e.target.value)}
+                    placeholder="Enter ID number"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="issueDate" className="text-sm font-medium">Issue Date</Label>
+                    <Input
+                      id="issueDate"
+                      type="date"
+                      value={formData.identification.issueDate}
+                      onChange={(e) => handleInputChange('identification', 'issueDate', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="expiryDate" className="text-sm font-medium">Expiry Date</Label>
+                    <Input
+                      id="expiryDate"
+                      type="date"
+                      value={formData.identification.expiryDate}
+                      onChange={(e) => handleInputChange('identification', 'expiryDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Review */}
+            {currentStep === 4 && (
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <UserIcon className="h-5 w-5" />
+                    Personal Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Full Name</p>
+                      <p className="font-medium">
+                        {formData.personalInfo.firstName} {formData.personalInfo.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Date of Birth</p>
+                      <p className="font-medium">{formData.personalInfo.dateOfBirth}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Gender</p>
+                      <p className="font-medium capitalize">{formData.personalInfo.gender}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="font-medium">{formData.personalInfo.phoneNumber}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Emergency Contact</p>
+                    <p className="font-medium">
+                      {formData.personalInfo.emergencyContact.name} ({formData.personalInfo.emergencyContact.relationship})
+                    </p>
+                    <p className="text-sm">{formData.personalInfo.emergencyContact.phoneNumber}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Stethoscope className="h-5 w-5" />
+                    Medical History
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Blood Type</p>
+                      <p className="font-medium">{formData.medicalInfo.bloodType === 'unknown' ? 'Not specified' : formData.medicalInfo.bloodType}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Height</p>
+                      <p className="font-medium">{formData.medicalInfo.height || 'Not specified'} cm</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Weight</p>
+                      <p className="font-medium">{formData.medicalInfo.weight || 'Not specified'} kg</p>
+                    </div>
+                  </div>
+                  
+                  {formData.medicalInfo.allergies.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Allergies</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.medicalInfo.allergies.map((allergy, index) => (
+                          <Badge key={index} variant="secondary">{allergy}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.medicalInfo.chronicConditions.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Chronic Conditions</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.medicalInfo.chronicConditions.map((condition, index) => (
+                          <Badge key={index} variant="secondary">{condition}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.medicalInfo.currentMedications.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Medications</p>
+                      <div className="space-y-2 mt-1">
+                        {formData.medicalInfo.currentMedications.map((med, index) => (
+                          <div key={index} className="text-sm">
+                            <span className="font-medium">{med.name}</span> - {med.dosage} ({med.frequency})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.medicalInfo.pastSurgeries.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Past Surgeries</p>
+                      <div className="space-y-1 mt-1">
+                        {formData.medicalInfo.pastSurgeries.map((surgery, index) => (
+                          <div key={index} className="text-sm">
+                            <span className="font-medium">{surgery.name}</span> ({surgery.year})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Insurance Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Provider</p>
+                      <p className="font-medium">{formData.insuranceInfo.providerName || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Policy Number</p>
+                      <p className="font-medium">{formData.insuranceInfo.policyNumber || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Insurance Type</p>
+                      <p className="font-medium capitalize">{formData.insuranceInfo.insuranceType}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valid Until</p>
+                      <p className="font-medium">{formData.insuranceInfo.validUntil || 'Not specified'}</p>
+                    </div>
+                  </div>
+                  {formData.insuranceInfo.coverageDetails && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Coverage Details</p>
+                      <p className="font-medium">{formData.insuranceInfo.coverageDetails}</p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <IdCard className="h-5 w-5" />
+                    Identification
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">ID Type</p>
+                      <p className="font-medium capitalize">{formData.identification.type.replace('-', ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">ID Number</p>
+                      <p className="font-medium">{formData.identification.number || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Issue Date</p>
+                      <p className="font-medium">{formData.identification.issueDate || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Expiry Date</p>
+                      <p className="font-medium">{formData.identification.expiryDate || 'Not specified'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Uploaded Documents Summary */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Uploaded Documents
+                  </h3>
+                  
+                  {(() => {
+                    const allDocuments = [
+                      ...formData.personalInfo.documents,
+                      ...formData.medicalInfo.documents,
+                      ...formData.insuranceInfo.documents,
+                      ...formData.identification.documents
+                    ];
+
+                    if (allDocuments.length === 0) {
+                      return (
+                        <p className="text-muted-foreground text-center py-4">
+                          No documents uploaded
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        {allDocuments.map((doc) => {
+                          const docType = Object.values(documentTypes)
+                            .flat()
+                            .find(t => t.value === doc.type);
+                          return (
+                            <div
+                              key={doc.id}
+                              className="flex items-center justify-between p-3 border rounded-lg"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded ${
+                                  doc.uploadStatus === 'completed' ? 'bg-green-500/10 text-green-500' :
+                                  'bg-gray-500/10 text-gray-500'
+                                }`}>
+                                  <FileText className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="font-medium">
+                                    {docType?.label || doc.type}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Number: {doc.number}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant={doc.uploadStatus === 'completed' ? 'default' : 'outline'}>
+                                {doc.uploadStatus === 'completed' ? 'Uploaded' : 'Pending'}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (

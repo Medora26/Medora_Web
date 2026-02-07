@@ -1,7 +1,7 @@
 'use client'
 import ProtectedRoute from '@/components/protectedRoutes/protectedRoutes'
 import { Button } from '@/components/ui/button'
-import { signOutUser } from '@/lib/firebase/auth'
+import { signOutUser } from '@/lib/firebase/service/auth'
 import React from 'react'
 import { toast } from 'sonner'
 
@@ -17,8 +17,9 @@ const Dashboard = () => {
      }
   }
   return (
+   
    <ProtectedRoute>
-     <div>
+      <div>
         <Button
          variant={'default'}
         onClick={handleLogout}>
@@ -26,6 +27,7 @@ const Dashboard = () => {
         </Button>
     </div>
    </ProtectedRoute>
+  
   )
 }
 

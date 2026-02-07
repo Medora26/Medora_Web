@@ -1,139 +1,93 @@
+// context/auth-context.tsx
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
-import { AuthUser } from '@/types/auth/auth-layout/types';
-import { getUserData, setupAuthListener } from '@/lib/firebase/auth';
-
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 interface AuthContextType {
   user: User | null;
-  authUser: AuthUser | null;
+  isOnboardingComplete: boolean;
   loading: boolean;
-  error: string | null;
-  refreshAuthUser: () => Promise<void>;
+  refreshOnboardingStatus: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  authUser: null,
-  loading: true,
-  error: null,
-  refreshAuthUser: async () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Function to refresh auth user data from Firestore
-  const refreshAuthUser = async () => {
-    if (user) {
-      try {
-        const result = await getUserData(user.uid);
-        if (result.success && result.user) {
-          setAuthUser(result.user);
-        } else {
-          console.warn('Could not fetch user data:', result.error);
-          setAuthUser(null);
-        }
-      } catch (err) {
-        console.error('Error refreshing auth user:', err);
-        setAuthUser(null);
+  // Check onboarding status from the 'users' collection
+  const checkOnboardingStatus = async (userId: string) => {
+    try {
+      // Check the 'users' collection for hasCompletedOnboarding field
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const completed = userData.hasCompletedOnboarding || false;
+        console.log('📊 AuthContext - Onboarding status:', { 
+          userId, 
+          completed,
+          exists: userDoc.exists(),
+          userData 
+        });
+        setIsOnboardingComplete(completed);
+      } else {
+        console.log('📊 AuthContext - User document not found in users collection');
+        setIsOnboardingComplete(false);
       }
+    } catch (error) {
+      console.error('❌ AuthContext - Error checking onboarding:', error);
+      setIsOnboardingComplete(false);
+    }
+  };
+
+  const refreshOnboardingStatus = async () => {
+    if (user) {
+      console.log('🔄 AuthContext - Refreshing onboarding status for:', user.uid);
+      await checkOnboardingStatus(user.uid);
     }
   };
 
   useEffect(() => {
-    // Use the setupAuthListener from auth.ts which includes Firestore data
-    const unsubscribe = setupAuthListener(
-      async (firebaseUser, firestoreUserData) => {
-        setUser(firebaseUser);
-        
-        if (firebaseUser) {
-          // If we have Firestore data from the listener, use it
-          if (firestoreUserData) {
-            setAuthUser(firestoreUserData);
-          } else {
-            // Otherwise fetch it manually
-            try {
-              const result = await getUserData(firebaseUser.uid);
-              if (result.success && result.user) {
-                setAuthUser(result.user);
-              } else {
-                console.warn('Could not fetch user data on auth state change:', result.error);
-                setAuthUser({
-                  uid: firebaseUser.uid,
-                  email: firebaseUser.email || '',
-                  username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-                  displayName: firebaseUser.displayName || undefined,
-                  photoURL: firebaseUser.photoURL || undefined,
-                  createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
-                  hasCompletedOnboarding: false,
-                  emailVerified: firebaseUser.emailVerified
-                });
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
-              // Create a minimal auth user from Firebase data
-              setAuthUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email || '',
-                username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-                displayName: firebaseUser.displayName || undefined,
-                photoURL: firebaseUser.photoURL || undefined,
-                createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
-                hasCompletedOnboarding: false,
-                emailVerified: firebaseUser.emailVerified
-              });
-            }
-          }
-        } else {
-          setAuthUser(null);
-        }
-        
-        setLoading(false);
-        setError(null);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('🔄 AuthContext - Auth state changed:', currentUser?.uid);
+      setUser(currentUser);
+      
+      if (currentUser) {
+        await checkOnboardingStatus(currentUser.uid);
+      } else {
+        setIsOnboardingComplete(false);
       }
-    );
+      setLoading(false);
+    });
 
-    // Cleanup subscription
     return () => unsubscribe();
   }, []);
-
-  // Listen for changes to the user and refresh auth user data
-  useEffect(() => {
-    if (user) {
-      refreshAuthUser();
-    } else {
-      setAuthUser(null);
-    }
-  }, [user]);
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      authUser, 
+      isOnboardingComplete, 
       loading, 
-      error, 
-      refreshAuthUser 
+      refreshOnboardingStatus 
     }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
