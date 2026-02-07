@@ -18,7 +18,7 @@ import {
   verifyOTPAndLogin,
   resendOTP,
   resetPassword // Updated to use resetPassword function
-} from '@/lib/firebase/auth'
+} from '@/lib/firebase/service/auth'
 
 const SignIn = () => {
   const [step, setStep] = useState<'login' | 'otp'>('login')
