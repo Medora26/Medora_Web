@@ -21,7 +21,7 @@ export default function OurLatestCreations() {
   ];
 
   return (
-    <section className="flex flex-col items-center justify-center py-16 bg-white text-black">
+    <section  id="creations" className="scroll-mt-12 flex flex-col items-center justify-center py-16 bg-white text-black">
 
       <SectionTitle
         title="Medical Records in One Place"

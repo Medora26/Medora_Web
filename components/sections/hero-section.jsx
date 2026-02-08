@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 
-
 export default function HeroSection() {
 
   return (
-    <section className="flex flex-col items-center justify-center relativemin-h-[80vh] py-12 overflow-hidden">
+    <section id="home" className="scroll-mt-20 flex flex-col items-center justify-center relativemin-h-[80vh] py-12 overflow-hidden">
 
       {/* BACKGROUND GRADIENT */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white via-gray-100 to-white" />
+<div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.04),_transparent_60%)]" />
+
 
       {/* TRUST BADGE */}
       <div className="flex items-center justify-center p-1.5 rounded-full border border-gray-200">
@@ -35,23 +36,35 @@ export default function HeroSection() {
       </p>
 
       {/* CTA */}
-<div className="w-full flex justify-center mt-8">
- <Link href="/onboarding">
-  <button className="px-8 py-3 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition">
-    Upload Records
-  </button>
-</Link>
-
+<div className="flex justify-center mt-8">
+  <Link href="/onboarding">
+    <button className="px-8 h-12 rounded-full text-white font-medium bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">
+      Upload Records
+    </button>
+  </Link>
 </div>
 
 
-      {/* FEATURE HIGHLIGHTS */}
-      <div className="flex flex-wrap justify-center gap-6 mt-14 text-sm text-gray-500">
-        <span>🔒 End-to-end encrypted</span>
-        <span>📄 Store prescriptions & reports</span>
-        <span>📱 Access anytime</span>
-        <span>🩺 Share with doctors securely</span>
-      </div>
+
+     {/* FEATURE HIGHLIGHTS */}
+<div className="flex flex-wrap justify-center gap-4 mt-14 text-sm">
+  <span className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-gray-600">
+    🔒 End-to-end encrypted
+  </span>
+
+  <span className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-gray-600">
+    📄 Store prescriptions & reports
+  </span>
+
+  <span className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-gray-600">
+    📱 Access anytime
+  </span>
+
+  <span className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-gray-600">
+    🩺 Share with doctors securely
+  </span>
+</div>
+
 
     </section>
   );

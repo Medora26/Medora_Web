@@ -1,72 +1,80 @@
-import { DribbbleIcon, LinkedinIcon, TwitterIcon, YoutubeIcon } from "lucide-react";
+import { LinkedinIcon, TwitterIcon, YoutubeIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
+  const data = [
+    {
+      title: "Product",
+      links: [
+        { title: "Features", href: "#features" },
+        { title: "Security", href: "#security" },
+        { title: "Integrations", href: "#integrations" },
+        { title: "Pricing", href: "#pricing" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { title: "About", href: "#about" },
+        { title: "Careers", href: "#careers" },
+        { title: "Blog", href: "#blog" },
+        { title: "Contact", href: "#contact" },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { title: "Terms", href: "#terms" },
+        { title: "Privacy", href: "#privacy" },
+        { title: "Compliance", href: "#compliance" },
+      ],
+    },
+  ];
 
-    const data = [
-        {
-            title: 'Company',
-            links: [
-                { title: 'About us', href: '#about-us' },
-                { title: 'Our vision', href: '#our-vision' },
-                { title: 'Community', href: '#community' },
-                { title: 'Careers', href: '#careers' },
-                { title: 'Term & conditions', href: '#term-and-conditions' },
-                { title: 'Privacy', href: '#privacy' },
-            ],
-        },
-        {
-            title: 'Account',
-            links: [
-                { title: 'Settings', href: '#settings' },
-                { title: 'Refund policy', href: '#refund-policy' },
-                { title: 'Affiliates', href: '#affiliates' },
-                { title: 'Gift cards', href: '#gift-cards' },
-            ],
-        },
-        {
-            title: 'Contact',
-            links: [
-                { title: 'Contact us', href: '#contact-us' },
-                { title: 'Instagram', href: '#instagram' },
-                { title: 'Linkedin', href: '#linkedin' },
-                { title: 'Github', href: '#github' },
-            ],
-        },
-    ];
-    return (
-        <footer className="px-4 md:px-16 lg:px-24 text-[13px] py-16 bg-white text-gray-500">
-            <div className="flex flex-wrap items-start min-md:justify-between gap-10 md:gap-[60px]">
-                
-                {data.map((item, index) => (
-                    <div key={index} className="max-w-80">
-                        <p className="font-semibold text-gray-800">{item.title}</p>
-                        <ul className="mt-5 space-y-2">
-                            {item.links.map((link, index) => (
-                                <li key={index}>
-                                    <a href={link.href} className="hover:text-indigo-500 transition">
-                                        {link.title}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+  return (
+    <footer className="px-4 md:px-16 lg:px-24 py-16 bg-gray-50 text-gray-600">
+      <div className="flex flex-col md:flex-row justify-between gap-12">
+
+        {/* Brand */}
+        <div className="max-w-sm">
+          <h2 className="text-lg font-semibold text-gray-900">Medora</h2>
+          <p className="mt-3 text-sm">
+            Securely store, manage and access medical records anytime.
+            Built for patients and healthcare providers.
+          </p>
+
+          {/* Socials */}
+          <div className="flex gap-4 mt-6">
+            <TwitterIcon className="w-5 h-5 hover:text-indigo-600 cursor-pointer" />
+            <LinkedinIcon className="w-5 h-5 hover:text-indigo-600 cursor-pointer" />
+            <YoutubeIcon className="w-5 h-5 hover:text-indigo-600 cursor-pointer" />
+          </div>
+        </div>
+
+        {/* Links */}
+        <div className="flex flex-wrap gap-12">
+          {data.map((item, index) => (
+            <div key={index}>
+              <p className="font-semibold text-gray-900">{item.title}</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                {item.links.map((link, i) => (
+                  <li key={i}>
+                    <Link href={link.href} className="hover:text-indigo-600 transition">
+                      {link.title}
+                    </Link>
+                  </li>
                 ))}
-                <div className="max-w-80 md:ml-40">
-                    <p className='font-semibold text-gray-800'>Sign up for newsletter</p>
-                    <p className='mt-5 text-sm'>
-                        The latest news, articles and resources, sent to your inbox weekly.
-                    </p>
-                    <div className='flex items-center mt-4'>
-                        <input type="email" className='bg-white w-full border border-gray-300 h-9 px-3 outline-none' />
-                        <button className="w-full py-3 rounded-full text-white font-medium bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] active:scale-95 transition-all shadow-sm">
-                               Sign Up
-                         </button>
-
-
-                    </div>
-                </div>
+              </ul>
             </div>
-        
-        </footer>
-    );
-};
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom line */}
+      <div className="mt-12 border-t pt-6 text-sm text-gray-500 flex flex-col md:flex-row justify-between">
+        <p>© {new Date().getFullYear()} Medora. All rights reserved.</p>
+        <p>Built for modern healthcare.</p>
+      </div>
+    </footer>
+  );
+}

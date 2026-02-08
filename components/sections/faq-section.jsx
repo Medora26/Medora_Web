@@ -35,11 +35,11 @@ export default function FaqSection() {
   ];
 
   return (
-    <section className='flex flex-col items-center justify-center  bg-white'>
+    <section id="faq" className='scroll-mt-18 flex flex-col items-center justify-center  bg-white text-black'>
 
       <SectionTitle
-        title="Frequently Asked Questions"
-        subtitle="Everything you need to know about storing and managing your medical records with Medora."
+        title="FAQ's"
+        subtitle="-Everything you need to know about storing and managing your medical records with Medora."
       />
 
       <div className='mx-auto mt-12 w-full max-w-xl'>

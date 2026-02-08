@@ -15,7 +15,7 @@ export default function OurTestimonialSection() {
     {
       review:
         'Sharing lab reports with my doctor has become instant and stress-free. This platform is genuinely useful.',
-      name: 'Neha Verma',
+      name: 'Karan Verma',
       about: 'Working Professional',
       rating: 5,
       image:
@@ -33,8 +33,8 @@ export default function OurTestimonialSection() {
     {
       review:
         'Very helpful for managing family health records. Clean UI and very easy to navigate.',
-      name: 'Priya Nair',
-      about: 'Parent',
+      name: 'Pramik Nair',
+      about: 'Patient',
       rating: 5,
       image:
         'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=60',
@@ -42,8 +42,8 @@ export default function OurTestimonialSection() {
     {
       review:
         'Secure, fast, and reliable. I feel confident storing important medical documents here.',
-      name: 'Rohan Gupta',
-      about: 'User',
+      name: 'Dr. Kavya Singh',
+      about: 'Healthcare Professional',
       rating: 5,
       image:
         'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&h=100&auto=format&fit=crop',
@@ -51,8 +51,8 @@ export default function OurTestimonialSection() {
     {
       review:
         'Medora makes healthcare data management simple. Doctors can view reports instantly.',
-      name: 'Dr. Kavya Singh',
-      about: 'Healthcare Professional',
+      name: 'Rohan Gupta',
+      about: 'User',
       rating: 5,
       image:
         'https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/userImage/userImage1.png',
@@ -60,7 +60,7 @@ export default function OurTestimonialSection() {
   ];
 
   return (
-    <section className='flex flex-col items-center justify-center py-12 bg-white text-black'>
+    <section id="testimonials" className='scroll-mt-8 flex flex-col items-center justify-center py-12 bg-white text-black'>
       <SectionTitle
         title='What Our Users Say'
         subtitle='Real experiences from patients and healthcare professionals using Medora to manage medical records.'

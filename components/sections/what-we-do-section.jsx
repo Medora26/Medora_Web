@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function WhatWeDoSection() {
   return (
-   <section className="flex flex-col md:flex-row items-center justify-center gap-20 py-16 px-4 bg-white">
+   <section id="what-we-do" className="scroll-mt-12 flex flex-col md:flex-row items-center justify-center gap-20 py-16 px-4 bg-white">
   
 <div className="relative shrink-0">
 
@@ -37,11 +37,11 @@ export default function WhatWeDoSection() {
           Share reports securely with doctors, track treatments, and keep your entire
           medical journey organized in one place.
         </p>
+<Link
+  href="/onboarding"
+  className="flex items-center gap-2 mt-8 bg-white text-gray-900 py-3 px-8 rounded-full w-fit border border-gray-200 shadow-sm hover:bg-gray-100 transition"
+>
 
-        <Link
-          href="/onboarding"
-          className="flex items-center gap-2 mt-8 transition bg-white text-black hover:bg-gray-200 py-3 px-8 rounded-full w-fit"
-        >
           <span>Start uploading records</span>
           <ArrowRightIcon className="size-5" />
         </Link>
