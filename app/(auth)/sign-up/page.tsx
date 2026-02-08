@@ -258,7 +258,7 @@ const SignUp = () => {
                   disabled={loading}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
-                  className="w-full py-6 border-none bg-neutral-900"
+                  className="w-full py-6 border "
                   maxLength={255}
                 />
                 <p className="text-xs text-gray-500">Maximum 255 characters</p>
@@ -276,7 +276,7 @@ const SignUp = () => {
                   disabled={loading}
                   onChange={handleInputChange}
                   placeholder="your.email@example.com"
-                  className="w-full py-6 border-none bg-neutral-900"
+                  className="w-full py-6 border"
                 />
               </div>
               
@@ -291,7 +291,7 @@ const SignUp = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Create a password (min. 6 characters)"
-                    className="w-full py-6 border-none bg-neutral-900 pr-10"
+                    className="w-full py-6 border pr-10"
                     minLength={6}
                     disabled={loading}
                   />
@@ -323,7 +323,7 @@ const SignUp = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     placeholder="Re-enter your password"
-                    className="w-full py-6 border-none bg-neutral-900 pr-10"
+                    className="w-full py-6 border pr-10"
                     minLength={6}
                     disabled={loading}
                   />

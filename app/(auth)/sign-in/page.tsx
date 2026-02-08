@@ -305,7 +305,7 @@ const SignIn = () => {
           disabled={loading}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your.email@example.com"
-          className="w-full py-6 border-none bg-neutral-900"
+          className="w-full py-6 border"
         />
       </div>
      
@@ -321,7 +321,7 @@ const SignIn = () => {
           disabled={loading}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="w-full py-6 border-none bg-neutral-900"
+          className="w-full py-6 border"
           minLength={6}
         />
       </div>
@@ -374,7 +374,7 @@ const SignIn = () => {
 
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         className="w-full py-4 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-800"
         onClick={handleGoogleSignIn}
         disabled={googleLoading || loading}

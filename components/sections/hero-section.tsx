@@ -15,7 +15,7 @@ export default function HeroSection() {
    >
       <Navbar />
      <div className="max-w-7xl mx-auto flex flex-col items-center justify-center h-screen">
-                    <AnimatedContent reverse distance={30} className="flex items-center gap-2 backdrop-blur p-1 rounded-full">
+                    <AnimatedContent reverse distance={30} className="flex items-center gap-2 backdrop-blur p-1 -mt-20 rounded-full ">
                         <div className="flex items-center -space-x-3">
                             <img className="size-7 rounded-full border "
                                 src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=50"
@@ -26,7 +26,7 @@ export default function HeroSection() {
                         </div>
                         <span>60K+</span>
                         <div className="h-5 w-px mx-1 rounded-full" />
-                        <span>Trusted by patients & healthcare professionals</span>
+                        <span>Trusted by healthcare professionals</span>
                         <div className="h-5 w-px mx-1 rounded-full" />
                         <div className="flex items-center gap-1 pr-3">
                             <StarIcon className="size-4.5 fill-orange-500 stroke-orange-500" />
@@ -36,10 +36,10 @@ export default function HeroSection() {
                     <AnimatedContent distance={30} delay={0.1} className="relative">
                         <div className="flex flex-col items-center ">
                          <span
-                          className="font-bold text-7xl/tight max-w-7xl  text-center"
+                          className="font-bold text-4xl md:text-7xl/tight max-w-7xl  text-center"
                          ><span
                          className="bg-gradient-to-r from-neutral-400 to-neutral-950 text-transparent bg-clip-text"
-                         >Access</span> Your <span className="bg-gradient-to-r from-blue-600 to-blue-200 text-transparent bg-clip-text">Medical Record,</span> Anytime, Anywhere</span>
+                         >Access</span> Your <span className="bg-gradient-to-r from-blue-600 to-blue-300 text-transparent bg-clip-text">Medical Record,</span> Anytime, Anywhere</span>
                           
                         </div>
                         <div className="absolute -top-5 right-13 hidden md:block">
@@ -47,16 +47,16 @@ export default function HeroSection() {
                         </div>
                     </AnimatedContent>
                     <AnimatedContent distance={30} delay={0.2}>
-                        <p className="text-center text-base/7  max-w-xl mt-4">
+                        <p className="text-center text-base/7 font-semibold   max-w-xl mt-4">
                             Medora helps you securely manage prescriptions, lab reports, and health history
         in one place — private, encrypted, and always available when you need it.
                         </p>
                     </AnimatedContent>
                     <AnimatedContent className="flex flex-col md:flex-row items-center gap-4 mt-6 w-full md:w-auto">
-                        <Link href="/" className="py-3 md:py-2.5 w-full md:w-auto px-8 border border-blue-200 bg-linear-to-tl from-blue-600 to-blue-500 text-white text-center rounded-full">
+                        <Link href="/sign-up" className="py-3 md:py-2.5 w-full md:w-auto px-8 border border-blue-200 bg-linear-to-tl from-blue-600 to-blue-500 text-white text-center rounded-full">
                             Get Started
                         </Link>
-                        <Link href="/" className="relative py-3 md:py-2.5 w-full md:w-auto px-8 bg-white/50 text-gray-600 font-medium text-center border border-white rounded-full">
+                        <Link href="/sign-in" className="relative py-3 md:py-2.5 w-full md:w-auto px-8  bg-indigo-100 font-medium text-center border  rounded-full">
                             Start Storing
                            
                         </Link>
