@@ -5,48 +5,64 @@ import { MinusIcon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
 export default function FaqSection() {
-    const [isOpen, setIsOpen] = useState(false);
-    const data = [
-        {
-            question: 'Do I need coding or design experience to use PrebuiltUI?',
-            answer: "Basic coding knowledge (HTML/CSS, Tailwind) helps, but advanced design skills aren't required. You can use components as-is or customize them.",
-        },
-        {
-            question: 'What is PrebuiltUI and how does it help developers and designers?',
-            answer: 'PrebuiltUI provides ready-to-use, customizable UI components and templates, saving time for developers and designers.',
-        },
-        {
-            question: 'Can I use PrebuiltUI components in my existing project?',
-            answer: 'Yes, components can be integrated into HTML, React, Next.js, Vue, and other projects using Tailwind CSS.',
-        },
-        {
-            question: 'How customizable are the generated components?',
-            answer: 'Components are highly customizable with Tailwind utility classes, theming, and structural adjustments.',
-        },
-        {
-            question: 'Does PrebuiltUI support team collaboration?',
-            answer: "There's no clear documentation on built-in collaboration features. Check their support for team options.",
-        },
-        {
-            question: 'Can I try PrebuiltUI before purchasing a plan?',
-            answer: 'Yes, you can try PrebuiltUI with full access to features.',
-        },
-    ];
+  const [isOpen, setIsOpen] = useState(null);
 
-    return (
-        <section className='flex flex-col items-center justify-center mt-40'>
-            <SectionTitle title="FAQ's" subtitle="Looking for answers to your frequently asked questions? Check out our FAQ's section below to find." />
-            <div className='mx-auto mt-12 w-full max-w-xl'>
-                {data.map((item, index) => (
-                    <div key={index} className='flex flex-col border-b border-gray-200 bg-white'>
-                        <h3 className='flex cursor-pointer items-start justify-between gap-4 py-4 font-medium' onClick={() => setIsOpen(isOpen === index ? null : index)}>
-                            {item.question}
-                            {isOpen === index ? <MinusIcon className='size-5 text-gray-500' /> : <PlusIcon className='size-5 text-gray-500' />}
-                        </h3>
-                        <p className={`pb-4 text-sm/6 text-gray-500 ${isOpen === index ? 'block' : 'hidden'}`}>{item.answer}</p>
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
+  const data = [
+    {
+      question: 'Is my medical data secure on Medora?',
+      answer: 'Yes. All records are encrypted and stored securely so only you and authorized doctors can access them.',
+    },
+    {
+      question: 'What kind of records can I upload?',
+      answer: 'You can upload prescriptions, lab reports, scans, health history documents, and other medical files.',
+    },
+    {
+      question: 'Can I share my reports with doctors?',
+      answer: 'Yes. You can instantly share records with doctors whenever needed without carrying physical files.',
+    },
+    {
+      question: 'Can I access my records anytime?',
+      answer: 'Absolutely. Your medical data stays available 24/7 from any device.',
+    },
+    {
+      question: 'Do I need technical knowledge to use Medora?',
+      answer: 'No. Medora is designed to be simple and easy for anyone to use.',
+    },
+    {
+      question: 'Is Medora free to use?',
+      answer: 'Yes, you can start using Medora and uploading records without any upfront cost.',
+    },
+  ];
+
+  return (
+    <section className='flex flex-col items-center justify-center  bg-white'>
+
+      <SectionTitle
+        title="Frequently Asked Questions"
+        subtitle="Everything you need to know about storing and managing your medical records with Medora."
+      />
+
+      <div className='mx-auto mt-12 w-full max-w-xl'>
+        {data.map((item, index) => (
+          <div key={index} className='flex flex-col border-b border-gray-200 bg-white'>
+            <h3
+              className='flex cursor-pointer items-start justify-between gap-4 py-4 font-medium text-black'
+              onClick={() => setIsOpen(isOpen === index ? null : index)}
+            >
+              {item.question}
+              {isOpen === index
+                ? <MinusIcon className='size-5 text-gray-500' />
+                : <PlusIcon className='size-5 text-gray-500' />
+              }
+            </h3>
+
+            <p className={`pb-4 text-sm text-gray-500 ${isOpen === index ? 'block' : 'hidden'}`}>
+              {item.answer}
+            </p>
+          </div>
+        ))}
+      </div>
+
+    </section>
+  );
 }
