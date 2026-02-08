@@ -1,5 +1,6 @@
 'use client';
 
+import { LOGO } from '@/public/logo/logo';
 import { MenuIcon, XIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,22 +22,22 @@ const links = [
   return (
     <>
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 pl-4 pr-4 md:pl-8 md:pr-12">
+      <nav className="sticky top-0  flex h-16 w-full items-center justify-between backdrop-blur-md  pl-4 pr-4 md:pl-8 md:pr-12 bg-transparent">
 
         {/* LOGO */}
         <Link href="/">
           <Image
-            src="/logo/light-new.png"
+            src={LOGO.MEDORA_LOGO}
             alt="Medora"
             width={90}
             height={10}
-            className=" w-20 object-contain"
+            className=" w-32 object-contain"
             priority
           />
         </Link>
 
         {/* DESKTOP LINKS */}
-        <div className="hidden items-center space-x-6 text-[13px] text-gray-600 md:flex">
+        <div className="hidden items-center space-x-6 text-[13px]  md:flex">
           {links.map((link) => (
             <a key={link.name} href={link.href} className="transition hover:text-black">
               {link.name}
@@ -47,7 +48,7 @@ const links = [
         {/* CTA */}
         <Link
           href="/sign-up"
-          className="hidden rounded-full bg-indigo-600 text-white px-5 py-2 text-sm font-medium transition hover:bg-indigo-700 md:inline-block"
+          className="hidden rounded-md bg-blue-600 text-white px-5 py-2 text-sm font-semibold transition hover:bg-blue-700 md:inline-block"
         >
           Sign Up
         </Link>
@@ -77,7 +78,7 @@ const links = [
 
         <Link
           href="/sign-up"
-          className="rounded-full bg-indigo-600 text-white px-8 py-3 font-medium transition hover:bg-indigo-700"
+          className="rounded-md bg-blue-400 text-white px-8 py-3 font-medium transition hover:bg-indigo-700"
           onClick={() => setIsOpen(false)}
         >
           Sign Up

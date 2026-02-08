@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, League_Spartan } from "next/font/google";
+import { Geist, Geist_Mono, Inter, League_Spartan, Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
@@ -8,6 +8,18 @@ import { AuthProvider } from "@/context/auth/authContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const inter = Inter({
+    variable: "--font-sans",
+    subsets: ["latin"],
+    weight: ['100','200','300','400','500','600','700','800','900']
+});
+
+const urbanist = Urbanist({
+    variable: "--font-urbanist",
+    subsets: ["latin"],
+    weight: ['100','200','300','400','500','600','700','800','900']
 });
 
 const leagSpartan = League_Spartan({subsets: ['latin'] ,weight: ['100','200','300','400','500','600','700','800','900']})
@@ -31,11 +43,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${leagSpartan.className} ${geistMono.variable} antialiased`}
+        className={`${urbanist.className}  ${geistMono.variable} antialiased`}
       >
        <ThemeProvider
         attribute="class"
-        defaultTheme="system"
+        defaultTheme="light"
         enableSystem
         disableTransitionOnChange
        >
