@@ -108,3 +108,95 @@ Instant synchronization across all your devices.
 ---
 
 ## 📁 Project Structure
+
+---
+
+## 📂 Directory Breakdown
+
+### 🎯 **`/app` - Next.js App Router**
+The core application routes and pages using Next.js 15 App Router.
+
+| Path | Purpose |
+|------|---------|
+| `(auth)/` | Public authentication pages (sign-in, sign-up, forgot-password) |
+| `(onboarding)/` | Protected onboarding flow for new users |
+| `(dashboard)/` | Protected dashboard pages for authenticated users |
+| `layout.tsx` | Root layout with ThemeProvider and AuthProvider |
+| `page.tsx` | Landing page |
+
+---
+
+### 🧩 **`/components` - Reusable UI Components**
+
+| Directory | Purpose |
+|----------|---------|
+| `ui/` | Shadcn/ui component library (button, card, input, etc.) |
+| `layouts/` | Layout wrappers for auth and dashboard sections |
+| `shared/` | Cross-cutting components (theme toggle, spinner, error boundary) |
+
+---
+
+### 🧠 **`/context` - React Context Providers**
+
+| File | Purpose |
+|------|---------|
+| `auth-context.tsx` | Global authentication state and onboarding status |
+| `theme-context.tsx` | Dark/light theme management with localStorage persistence |
+
+---
+
+### 🔧 **`/lib` - Utilities & Services**
+
+| Directory | Purpose |
+|----------|---------|
+| `firebase/` | Firebase configuration and service methods |
+| `cloudinary/` | Cloudinary upload utilities |
+| `utils/` | Helper functions (date formatting, validation, constants) |
+
+---
+
+### 🖼️ **`/public` - Static Assets**
+
+| Path | Purpose |
+|------|---------|
+| `dark.png` | Dark mode homepage preview for README |
+| `light.png` | Light mode homepage preview for README |
+| `logo/` | Brand assets in multiple formats and themes |
+
+---
+
+### 📝 **`/types` - TypeScript Definitions**
+
+| Directory | Purpose |
+|----------|---------|
+| `auth/` | Authentication-related interfaces and types |
+| `user/` | User profile and onboarding data structures |
+| `documents/` | Document and upload types |
+
+---
+
+### 🎨 **`/styles` - Global Styles**
+
+| File | Purpose |
+|------|---------|
+| `globals.css` | Tailwind imports and CSS variables for theming |
+
+---
+
+## 🔐 Environment Variables
+
+```env
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# Cloudinary Configuration
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+
+# App URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
