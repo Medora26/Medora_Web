@@ -1,4 +1,4 @@
-<div align="center">
+<div align="left">
 
 # 🩺 MEDORA  
 ### Your Digital Health Drive 💾🛡️  
@@ -104,10 +104,6 @@ Instant synchronization across all your devices.
   <br />
   <em>Built with scalability, security, and performance in mind 🚀</em>
 </div>
-
----
-
-## 📁 Project Structure
 
 ---
 
