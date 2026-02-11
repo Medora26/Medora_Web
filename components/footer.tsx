@@ -1,4 +1,6 @@
+import { LOGO } from "@/public/logo/logo";
 import { LinkedinIcon, TwitterIcon, YoutubeIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -32,12 +34,21 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="px-4 md:px-16 lg:px-24 py-16 bg-gray-50 text-gray-600">
+    <footer className="px-4 md:px-16 lg:px-24 py-16 ">
       <div className="flex flex-col md:flex-row justify-between gap-12">
 
         {/* Brand */}
         <div className="max-w-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Medora</h2>
+          <Link href="/">
+          <Image
+            src={LOGO.MEDORA_LOGO}
+            alt="Medora"
+            width={90}
+            height={10}
+            className=" w-32 object-contain"
+            priority
+          />
+        </Link>
           <p className="mt-3 text-sm">
             Securely store, manage and access medical records anytime.
             Built for patients and healthcare providers.
@@ -55,11 +66,11 @@ export default function Footer() {
         <div className="flex flex-wrap gap-12">
           {data.map((item, index) => (
             <div key={index}>
-              <p className="font-semibold text-gray-900">{item.title}</p>
+              <p className="font-semibold text-neutral-500">{item.title}</p>
               <ul className="mt-4 space-y-2 text-sm">
                 {item.links.map((link, i) => (
                   <li key={i}>
-                    <Link href={link.href} className="hover:text-indigo-600 transition">
+                    <Link href={link.href} className="hover:text-blue-600 font-semibold transition">
                       {link.title}
                     </Link>
                   </li>

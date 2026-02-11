@@ -35,7 +35,7 @@ export default function FaqSection() {
   ];
 
   return (
-    <section id="faq" className='scroll-mt-18 flex flex-col items-center justify-center  bg-white text-black'>
+    <section id="faq" className='scroll-mt-18 flex flex-col items-center justify-center py-24'>
 
       <SectionTitle
         title="FAQ's"
@@ -44,9 +44,9 @@ export default function FaqSection() {
 
       <div className='mx-auto mt-12 w-full max-w-xl'>
         {data.map((item, index) => (
-          <div key={index} className='flex flex-col border-b border-gray-200 bg-white'>
+          <div key={index} className='flex flex-col border-b border-gray-200 '>
             <h3
-              className='flex cursor-pointer items-start justify-between gap-4 py-4 font-medium text-black'
+              className='flex cursor-pointer items-start justify-between gap-4 py-4 font-medium '
               onClick={() => setIsOpen(isOpen === index ? null : index)}
             >
               {item.question}

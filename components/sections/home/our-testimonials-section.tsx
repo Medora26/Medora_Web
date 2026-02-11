@@ -60,7 +60,7 @@ export default function OurTestimonialSection() {
   ];
 
   return (
-    <section id="testimonials" className='scroll-mt-8 flex flex-col items-center justify-center py-12 bg-white text-black'>
+    <section id="testimonials" className='scroll-mt-8 flex flex-col items-center justify-center py-12  '>
       <SectionTitle
         title='What Our Users Say'
         subtitle='Real experiences from patients and healthcare professionals using Medora to manage medical records.'
@@ -70,7 +70,7 @@ export default function OurTestimonialSection() {
         {data.map((item, index) => (
           <div
             key={index}
-            className='w-full max-w-88 space-y-4 rounded-md border border-gray-200 bg-white p-5 text-gray-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-md'
+            className='w-full max-w-88 space-y-4 rounded-md border  p-5 dark:bg-neutral-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-md'
           >
             <div className='flex gap-1'>
               {[...Array(item.rating)].map((_, index) => (

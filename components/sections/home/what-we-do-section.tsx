@@ -1,23 +1,25 @@
+import { HOMEPAGE } from "@/public/images/images";
 import { ArrowRightIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function WhatWeDoSection() {
   return (
-   <section id="what-we-do" className="scroll-mt-12 flex flex-col md:flex-row items-center justify-center gap-20 py-16 px-4 bg-white">
+   <section id="what-we-do" className="scroll-mt-12 flex flex-col md:flex-row items-center justify-center gap-20 py-16 px-4 ">
   
 <div className="relative shrink-0">
 
   {/* image */}
-  <img
-    src="/images/Medora-auth-layout.png"
-    alt="medical records"
-    className="relative max-w-sm w-full rounded-2xl object-cover"
+  <Image
+  className="relative max-w-md w-full rounded-2xl object-cover"
+  alt=""
+  src={HOMEPAGE.WHAT}
   />
 
 </div>
       {/* TEXT SIDE */}
-      <div className="text-sm text-gray-400 max-w-md">
-        <h1 className="text-xl uppercase font-semibold text-black">
+      <div className="text-sm  max-w-md">
+        <h1 className="text-xl uppercase font-semibold ">
           What Medora does
         </h1>
 

@@ -1,10 +1,10 @@
 'use client';
 
 import Link from "next/link";
-import AnimatedContent from "./home/animated-content";
+import AnimatedContent from "./animated-content";
 import { StarIcon } from "lucide-react";
 import Image from "next/image";
-import Navbar from "../navbar";
+import Navbar from "../../navbar";
 
 export default function HeroSection() {
 
