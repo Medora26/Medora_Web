@@ -1,4 +1,4 @@
-<div align="left">
+<div align="center">
 
 # 🩺 MEDORA  
 ### Your Digital Health Drive 💾🛡️  
@@ -7,9 +7,30 @@
 
 **Secure • Organized • User-Controlled Healthcare Data**
 
+---
+
+## 🏠 Home Page Preview
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="./public/light.png" alt="MEDORA Light Mode" width="400"/>
+        <br />
+        <em>🌞 Light Theme</em>
+      </td>
+      <td align="center">
+        <img src="./public/dark.png" alt="MEDORA Dark Mode" width="400"/>
+        <br />
+        <em>🌚 Dark Theme</em>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
+
+</div>
 
 ## ✨ About MEDORA
 
@@ -24,15 +45,13 @@ where users can securely store medical records and apply for insurance—all fro
 
 ## 🚀 Vision
 
-
-
 Healthcare data today is scattered, hard to access, and rarely user-controlled.
 
 MEDORA aims to:
-- 🔐 Give users full ownership of their medical data  
-- 📁 Centralize health records securely  
-- 🛡️ Simplify insurance access  
-- ⚡ Make healthcare data usable and accessible  
+- 🔐 **Give users full ownership** of their medical data  
+- 📁 **Centralize health records** securely  
+- 🛡️ **Simplify insurance access**  
+- ⚡ **Make healthcare data usable and accessible**  
 
 ---
 
@@ -40,17 +59,26 @@ MEDORA aims to:
 
 <img align="right" src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" width="260"/>
 
-- 📂 **Medical Data Storage**  
-  Upload reports, prescriptions, and medical history like a cloud drive.
+### 📂 **Medical Data Storage**
+Upload reports, prescriptions, and medical history like a cloud drive.
 
-- 🔐 **Privacy-First Architecture**  
-  User-controlled access and secure handling of sensitive data.
+### 🔐 **Privacy-First Architecture**
+User-controlled access and secure handling of sensitive data.
 
-- 🛡️ **Insurance Integration**  
-  Apply for medical insurance directly from MEDORA.
+### 🛡️ **Insurance Integration**
+Apply for medical insurance directly from MEDORA.
 
-- 🧾 **Clean Record Organization**  
-  Structured and searchable health records.
+### 🧾 **Clean Record Organization**
+Structured and searchable health records.
+
+### 🌓 **Dark/Light Mode**
+Seamless theme switching with persistent user preference.
+
+### 📱 **Responsive Design**
+Fully optimized for desktop, tablet, and mobile devices.
+
+### 🔄 **Real-time Updates**
+Instant synchronization across all your devices.
 
 ---
 
@@ -58,33 +86,25 @@ MEDORA aims to:
 
 <div align="center">
 
-<img src="https://media.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif" width="420"/>
+| **Category** | **Technologies** |
+|-------------|------------------|
+| **Frontend** | ⚛️ Next.js 15 (App Router) • 📘 TypeScript • 🔄 React 19 |
+| **Styling** | 🎨 Tailwind CSS • 🎭 Shadcn/ui • 🎯 Framer Motion • 🧩 Lucide Icons |
+| **Authentication** | 🔥 Firebase Auth • 🔐 Email/Password • 📧 OTP • 🟢 Google OAuth |
+| **Database** | 📦 Firestore (NoSQL) • 📊 Real-time updates |
+| **Storage** | ☁️ Cloudinary • 🖼️ Image optimization • 📄 PDF support |
+| **State Management** | 🧠 React Context • 🔄 Custom Hooks |
+| **Deployment** | ▲ Vercel • 🌐 Edge Functions |
+| **Analytics** | 📈 Google Analytics • 🔍 Error Tracking |
 
 </div>
 
-- ⚛️ **Next.js (App Router)**  
-- 🎨 **Tailwind CSS**  
-- 🔐 **Secure APIs & Authentication**  
-- ☁️ **Cloud Storage (Planned)**  
-
-Built with scalability, security, and performance in mind 🚀
+<div align="center">
+  <img src="https://media.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif" width="420"/>
+  <br />
+  <em>Built with scalability, security, and performance in mind 🚀</em>
+</div>
 
 ---
 
-## ▶️ Getting Started
-
-<img align="right" src="https://media.giphy.com/media/coxQHKASG60HrHtvkt/giphy.gif" width="240"/>
-
-This is a **Next.js** project bootstrapped with  
-[`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-### Run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 📁 Project Structure
