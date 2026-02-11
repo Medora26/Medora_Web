@@ -2,7 +2,7 @@ import SectionTitle from "@/components/section-title";
 
 export default function Newsletter() {
   return (
-    <section id="newsletter" className="scroll-mt-12 flex flex-col items-center justify-center bg-white py-16 text-black">
+    <section id="newsletter" className="scroll-mt-12 flex flex-col items-center justify-center py-16 ">
       <SectionTitle
         title="Stay Updated with Medora"
         subtitle="Get health tips, feature updates, and reminders to manage your medical records better."

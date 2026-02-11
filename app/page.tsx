@@ -1,18 +1,19 @@
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import HeroSection from "@/components/sections/hero-section";
-import WhatWeDoSection from "@/components/sections/what-we-do-section";
-import OurLatestCreations from "@/components/sections/our-latest-creations";
-import OurTestimonialSection from "@/components/sections/our-testimonials-section"
-import FaqSection from "@/components/sections/faq-section"
-import Newsletter from "@/components/sections/newsletter"
+import HeroSection from "@/components/sections/home/hero-section";
+import WhatWeDoSection from "@/components/sections/home/what-we-do-section";
+import OurLatestCreations from "@/components/sections/home/our-latest-creations";
+import OurTestimonialSection from "@/components/sections/home/our-testimonials-section"
+import FaqSection from "@/components/sections/home/faq-section"
+import Newsletter from "@/components/sections/home/newsletter"
+import HeroSectionTwo from "@/components/sections/home/hero-section-two";
 export default function Home() {
   return (
     <>
     
 
       <main className="min-h-screen">
-        <HeroSection />
+        <HeroSectionTwo/>
         <WhatWeDoSection />
         <OurLatestCreations />
         <OurTestimonialSection />

@@ -5,6 +5,7 @@ import { MenuIcon, XIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import ThemeToggleButton from './ui/theme-toggle-button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,8 +23,8 @@ const links = [
   return (
     <>
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between backdrop-blur-md  pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
-
+      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between   pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
+      
         {/* LOGO */}
         <Link href="/">
           <Image
@@ -37,21 +38,24 @@ const links = [
         </Link>
 
         {/* DESKTOP LINKS */}
-        <div className="hidden items-center space-x-6 text-[13px]  md:flex">
+        <div className="hidden items-center space-x-6 text-[13px]   md:flex">
           {links.map((link) => (
-            <a key={link.name} href={link.href} className="transition hover:text-black">
+            <a key={link.name} href={link.href} className="transition font-semibold dark:text-white/70 dark;:hover:text-white">
               {link.name}
             </a>
           ))}
         </div>
-
+         
         {/* CTA */}
-        <Link
+       <div className='flex items-center gap-2'>
+        <ThemeToggleButton variant='circle-blur'   />
+         <Link
           href="/sign-up"
-          className="hidden rounded-md bg-blue-600 text-white px-5 py-2 text-sm font-semibold transition hover:bg-blue-700 md:inline-block"
+          className="hidden rounded-md bg-blue-600 dark:text-white text-white px-5 py-2 text-sm font-semibold transition hover:bg-blue-700 md:inline-block"
         >
           Sign Up
         </Link>
+       </div>
 
         {/* MOBILE MENU BUTTON */}
         <button

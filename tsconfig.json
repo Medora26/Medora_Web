@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "components/sections/faq-section.tsx"  ],
+, "components/sections/home/faq-section.tsx"  ],
   "exclude": ["node_modules"]
 }

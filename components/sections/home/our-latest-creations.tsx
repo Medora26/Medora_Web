@@ -1,4 +1,6 @@
 import SectionTitle from "@/components/section-title";
+import { HOMEPAGE } from "@/public/images/images";
+import Image from "next/image";
 
 export default function OurLatestCreations() {
 
@@ -6,22 +8,22 @@ export default function OurLatestCreations() {
     {
       title: 'Digital Prescriptions',
       description: 'Store and access prescriptions securely anytime without worrying about losing paper records.',
-      image: '/assets/image-1.png',
+      image: HOMEPAGE.ONE,
     },
     {
       title: 'Lab Reports & Scans',
       description: 'Keep all medical reports, scans, and test results organized in one safe digital place.',
-      image: '/assets/image-2.png',
+      image: HOMEPAGE.TWO,
     },
     {
       title: 'Health History Timeline',
       description: 'Track treatments, diagnoses, and doctor visits with a complete medical history timeline.',
-      image: '/assets/image-3.png',
+      image: HOMEPAGE.THREE,
     },
   ];
 
   return (
-    <section  id="creations" className="scroll-mt-12 flex flex-col items-center justify-center py-16 bg-white text-black">
+    <section  id="creations" className="scroll-mt-12 flex flex-col items-center justify-center py-16  text-black">
 
       <SectionTitle
         title="Medical Records in One Place"
@@ -31,7 +33,7 @@ export default function OurLatestCreations() {
       <div className="flex flex-wrap items-center justify-center gap-10 mt-12">
         {data.map((item, index) => (
           <div key={index} className="max-w-80 hover:-translate-y-0.5 transition duration-300">
-            <img className="rounded-xl" src={item.image} alt={item.title} />
+            <Image className="rounded-xl" src={item.image} alt={item.title} />
             <h3 className="text-base font-semibold text-slate-700 mt-4">{item.title}</h3>
             <p className="text-sm text-gray-500 mt-1">{item.description}</p>
           </div>
