@@ -11,13 +11,14 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
 const links = [
-  { name: "Overview", href: "#hero" },
-  { name: "How it works", href: "#what-we-do" },
-  { name: "Features", href: "#creations" },
-  { name: "Testimonials", href: "#testimonials" },
-  { name: "FAQs", href: "#faq" },
-  { name: "Updates", href: "#newsletter" },
+  { name: "Overview", href: "/" },
+  { name: "How it works", href: "/how-it-works" },
+  { name: "Features", href: "/features" },
+  { name: "Testimonials", href: "/testimonials" },
+  { name: "FAQs", href: "/faqs" },
+  { name: "Updates", href: "/updates" },
 ];
+
 
 
   return (
@@ -38,13 +39,18 @@ const links = [
         </Link>
 
         {/* DESKTOP LINKS */}
-        <div className="hidden items-center space-x-6 text-[13px]   md:flex">
-          {links.map((link) => (
-            <a key={link.name} href={link.href} className="transition font-semibold dark:text-white/70 dark;:hover:text-white">
-              {link.name}
-            </a>
-          ))}
-        </div>
+       <div className="hidden items-center space-x-6 text-[13px] md:flex">
+                 {links.map((link) => (
+                 <Link
+                   key={link.name}
+                  href={link.href}
+                 className="transition font-semibold dark:text-white/70 dark:hover:text-white"
+                    >
+                  {link.name}
+                    </Link>
+                         ))}
+         </div>
+
          
         {/* CTA */}
        <div className='flex items-center gap-2'>
@@ -70,14 +76,14 @@ const links = [
       <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white text-lg font-medium text-gray-800 transition duration-300 md:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {links.map((link) => (
-          <a
+          <Link
             key={link.name}
             href={link.href}
             className="transition hover:text-black"
             onClick={() => setIsOpen(false)}
           >
             {link.name}
-          </a>
+          </Link>
         ))}
 
         <Link
