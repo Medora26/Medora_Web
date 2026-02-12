@@ -24,7 +24,7 @@ const links = [
   return (
     <>
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between   pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
+      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between  pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
       
         {/* LOGO */}
         <Link href="/">
