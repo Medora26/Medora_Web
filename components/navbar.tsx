@@ -4,28 +4,44 @@ import { LOGO } from '@/public/logo/logo';
 import { MenuIcon, XIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import ThemeToggleButton from './ui/theme-toggle-button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
 
-const links = [
-  { name: "Overview", href: "/" },
-  { name: "How it works", href: "/how-it-works" },
-  { name: "Features", href: "/features" },
-  { name: "Testimonials", href: "/testimonials" },
-  { name: "FAQs", href: "/faqs" },
-  { name: "Updates", href: "/updates" },
-];
+  const links = [
+    { name: "Overview", href: "/" },
+    { name: "How it works", href: "/how-it-works" },
+    { name: "Features", href: "/features" },
+    { name: "FAQs", href: "/faqs" },
+    { name: "Updates", href: "/updates" },
+  ];
 
+  /* detect scroll */
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
 
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <>
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between   pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
-      
+      <nav
+        className={`sticky top-0 z-50 w-full flex items-center justify-between transition-all duration-300
+        ${scrolled
+          ? "h-14 backdrop-blur-md bg-white/70 border-b border-gray-200 shadow-sm"
+          : "h-16 bg-transparent"}
+        pl-4 pr-4 lg:pl-8 lg:pr-12`}
+      >
+
         {/* LOGO */}
         <Link href="/">
           <Image
@@ -33,35 +49,53 @@ const links = [
             alt="Medora"
             width={90}
             height={10}
-            className=" w-32 object-contain"
+            className="w-32 object-contain"
             priority
           />
         </Link>
 
         {/* DESKTOP LINKS */}
-       <div className="hidden items-center space-x-6 text-[13px] md:flex">
-                 {links.map((link) => (
-                 <Link
-                   key={link.name}
-                  href={link.href}
-                 className="transition font-semibold dark:text-white/70 dark:hover:text-white"
-                    >
-                  {link.name}
-                    </Link>
-                         ))}
-         </div>
+        <div className="hidden items-center space-x-6 text-[13px] md:flex">
+          {links.map((link) => {
+            const isActive = pathname === link.href;
 
-         
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="relative font-semibold transition group"
+              >
+                <span
+                  className={`transition ${
+                    isActive
+                      ? "text-indigo-600"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                >
+                  {link.name}
+                </span>
+
+                {/* animated underline */}
+                <span
+                  className={`absolute left-0 -bottom-1 h-[2px] bg-indigo-600 transition-all duration-300 ${
+                    isActive ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
+              </Link>
+            );
+          })}
+        </div>
+
         {/* CTA */}
-       <div className='flex items-center gap-2'>
-        <ThemeToggleButton variant='circle-blur'   />
-         <Link
-          href="/sign-up"
-          className="hidden rounded-md bg-blue-600 dark:text-white text-white px-5 py-2 text-sm font-semibold transition hover:bg-blue-700 md:inline-block"
-        >
-          Sign Up
-        </Link>
-       </div>
+        <div className='flex items-center gap-2'>
+          <ThemeToggleButton variant='circle-blur' />
+          <Link
+            href="/sign-up"
+            className="hidden rounded-md bg-blue-600 text-white px-5 py-2 text-sm font-semibold transition hover:bg-blue-700 md:inline-block"
+          >
+            Sign Up
+          </Link>
+        </div>
 
         {/* MOBILE MENU BUTTON */}
         <button
@@ -73,13 +107,20 @@ const links = [
       </nav>
 
       {/* MOBILE MENU */}
-      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white text-lg font-medium text-gray-800 transition duration-300 md:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-
+      <div
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white text-lg font-medium text-gray-800 transition duration-300 md:hidden ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {links.map((link) => (
           <Link
             key={link.name}
             href={link.href}
-            className="transition hover:text-black"
+            className={`transition ${
+              pathname === link.href
+                ? "text-indigo-600 font-semibold"
+                : "text-gray-700 hover:text-black"
+            }`}
             onClick={() => setIsOpen(false)}
           >
             {link.name}
