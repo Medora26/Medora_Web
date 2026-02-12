@@ -1,38 +1,32 @@
 'use client';
 
 import SectionTitle from '@/components/section-title';
-import { MinusIcon, PlusIcon } from 'lucide-react';
+import {  MinusIcon, PlusIcon } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function FaqSection() {
  const [isOpen, setIsOpen] = useState<number | null>(null);
 
-  const data = [
-    {
-      question: 'Is my medical data secure on Medora?',
-      answer: 'Yes. All records are encrypted and stored securely so only you and authorized doctors can access them.',
-    },
-    {
-      question: 'What kind of records can I upload?',
-      answer: 'You can upload prescriptions, lab reports, scans, health history documents, and other medical files.',
-    },
-    {
-      question: 'Can I share my reports with doctors?',
-      answer: 'Yes. You can instantly share records with doctors whenever needed without carrying physical files.',
-    },
-    {
-      question: 'Can I access my records anytime?',
-      answer: 'Absolutely. Your medical data stays available 24/7 from any device.',
-    },
-    {
-      question: 'Do I need technical knowledge to use Medora?',
-      answer: 'No. Medora is designed to be simple and easy for anyone to use.',
-    },
-    {
-      question: 'Is Medora free to use?',
-      answer: 'Yes, you can start using Medora and uploading records without any upfront cost.',
-    },
-  ];
+const data = [
+  {
+    question: 'Is my medical data secure on Medora?',
+    answer: 'Yes. All records are encrypted and securely stored so only you and authorized doctors can access them.',
+  },
+  {
+    question: 'What kind of records can I upload?',
+    answer: 'You can upload prescriptions, lab reports, scans, and other medical files.',
+  },
+  {
+    question: 'Can I share my reports with doctors?',
+    answer: 'Yes. Share records securely without carrying physical files.',
+  },
+  {
+    question: 'Can I access my records anytime?',
+    answer: 'Yes. Your medical data stays available 24/7 from any device.',
+  },
+];
+
 
   return (
     <section id="faq" className='scroll-mt-18 flex flex-col items-center justify-center py-24'>
@@ -60,9 +54,19 @@ export default function FaqSection() {
               {item.answer}
             </p>
           </div>
-        ))}
+        ))}       
       </div>
+<div className="mt-10 text-center">
+  <Link
+    href="/faqs"
+    className="text-indigo-600 font-semibold hover:text-indigo-700 transition"
+  >
+    View all FAQs →
+  </Link>
+</div>
 
     </section>
+    
+    
   );
 }
