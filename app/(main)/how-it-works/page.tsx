@@ -2,14 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Public } from "@/public/public";
+import { useTheme } from "next-themes";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function HowItWorksPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+ const {setTheme, theme} = useTheme()
+ const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
+
 
   useEffect(() => {
     const sections = gsap.utils.toArray(".reveal");
@@ -35,11 +44,11 @@ export default function HowItWorksPage() {
   return (
     <main
       ref={containerRef}
-      className="bg-gradient-to-b from-white via-blue-50/60 to-white text-black"
+      className=""
     >
       {/* HERO */}
       <section className="relative py-24 px-6 text-center overflow-hidden reveal">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white via-blue-100/40 to-white" />
+        <div className="absolute inset-0 -z-10 " />
 
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
           How Medora Works
@@ -57,24 +66,36 @@ export default function HowItWorksPage() {
         {/* BLOCK 1 */}
         <div className="py-24 flex flex-col md:flex-row items-center gap-16 reveal">
           <div className="flex-1 relative">
-            <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-200/30 blur-3xl rounded-full" />
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-200/30 blur-3xl rounded-full" />
+            <div className="absolute -top-10 -left-10 w-40 h-40  blur-3xl rounded-full" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40  blur-3xl rounded-full" />
 
-            <div className="relative rounded-[22px] border border-gray-200 bg-white shadow-2xl p-3">
+            <div className="relative rounded-xl border hadow-2xl ">
               <div className="rounded-xl overflow-hidden">
-                <Image
-                  src="/light.png"
+              {
+                 mounted && theme === 'dark' ? (
+                    <Image
+                  src={Public.DARK}
                   alt="Medora homepage"
                   width={1000}
                   height={600}
                   className="w-full"
                 />
+                 ) : (
+                     <Image
+                  src={Public.LIGHT}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                 )
+              }
               </div>
             </div>
           </div>
 
           <div className="flex-1">
-            <p className="text-xs tracking-widest text-indigo-600 font-semibold">
+            <p className="text-xs tracking-widest text-blue-600 font-semibold">
               STEP 01
             </p>
             <h2 className="text-3xl font-semibold mt-2">Discover Medora</h2>
@@ -87,12 +108,37 @@ export default function HowItWorksPage() {
 
         {/* BLOCK 2 */}
         <div className="py-24 flex flex-col md:flex-row-reverse items-center gap-16 reveal">
-          <div className="flex-1">
-            <div className="rounded-2xl h-[360px] bg-white/70 backdrop-blur-md border border-gray-200 shadow-xl" />
+           <div className="flex-1 relative">
+            <div className="absolute -top-10 -left-10 w-40 h-40  blur-3xl rounded-full" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40  blur-3xl rounded-full" />
+
+            <div className="relative rounded-xl border shadow-2xl ">
+              <div className="rounded-xl overflow-hidden">
+                {
+                  mounted && theme === 'dark' ? (
+                      <Image
+                  src={Public.DARK_ONBOARDING}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  ) : (
+                      <Image
+                  src={Public.LIGHT_ONBOARDING}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  )
+                }
+              </div>
+            </div>
           </div>
 
           <div className="flex-1">
-            <p className="text-xs tracking-widest text-indigo-600 font-semibold">
+            <p className="text-xs tracking-widest text-blue-600 font-semibold">
               STEP 02
             </p>
             <h2 className="text-3xl font-semibold mt-2">Upload records</h2>
@@ -106,7 +152,7 @@ export default function HowItWorksPage() {
         {/* BLOCK 3 */}
         <div className="py-24 flex flex-col md:flex-row items-center gap-16 reveal">
           <div className="flex-1">
-            <div className="rounded-2xl h-[360px] bg-white/70 backdrop-blur-md border border-gray-200 shadow-xl" />
+            <div className="rounded-2xl h-[360px] backdrop-blur-md border  shadow-xl" />
           </div>
 
           <div className="flex-1">
@@ -124,7 +170,7 @@ export default function HowItWorksPage() {
         {/* BLOCK 4 */}
         <div className="py-24 flex flex-col md:flex-row-reverse items-center gap-16 reveal">
           <div className="flex-1">
-            <div className="rounded-2xl h-[360px] bg-white/70 backdrop-blur-md border border-gray-200 shadow-xl" />
+            <div className="rounded-2xl h-[360px] backdrop-blur-md border  shadow-xl" />
           </div>
 
           <div className="flex-1">
