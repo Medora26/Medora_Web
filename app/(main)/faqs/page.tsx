@@ -115,7 +115,7 @@ export default function FAQsPage() {
   }, [query, activeCategory]);
 
   return (
-    <main className="bg-white text-black">
+    <main className="">
 
       {/* HERO */}
       <section className="py-24 px-6 text-center">
