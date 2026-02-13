@@ -18,7 +18,7 @@ export default function Navbar() {
     { name: "How it works", href: "/how-it-works" },
     { name: "Features", href: "/features" },
     { name: "FAQs", href: "/faqs" },
-    { name: "Updates", href: "/updates" },
+    { name: "Contact-us", href: "/contact-us" },
   ];
 
   /* detect scroll */
@@ -41,7 +41,7 @@ export default function Navbar() {
       <nav
         className={`sticky top-0 z-50 w-full flex items-center justify-between transition-all duration-300
         ${scrolled
-          ? "h-14 backdrop-blur-md bg-white/70 border-b border-gray-200 shadow-sm"
+          ? "h-16 backdrop-blur-sm"
           : "h-16 bg-transparent"}
         pl-4 pr-4 lg:pl-8 lg:pr-12`}
       >
@@ -54,7 +54,7 @@ export default function Navbar() {
             alt="Medora"
             width={90}
             height={10}
-            className="w-32 object-contain"
+            className="w-24 object-contain"
             priority
           />
         </Link>
@@ -73,8 +73,8 @@ export default function Navbar() {
                 <span
                   className={`transition ${
                     isActive
-                      ? "text-indigo-600"
-                      : "text-gray-600 hover:text-black"
+                      ? ""
+                      : "text-gray-600 dark:hover:text-white"
                   }`}
                 >
                   {link.name}

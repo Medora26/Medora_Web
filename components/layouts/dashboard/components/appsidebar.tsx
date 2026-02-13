@@ -21,7 +21,8 @@ import {
   HardDrive,
   Shield,
   Activity,
-  User
+  User,
+  Trash
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -92,11 +93,11 @@ const AppSidebar = () => {
           className="object-contain"
         />
       </div>
-      <span className='text-xl font-bold whitespace-nowrap'>Medora</span>
+     
     </div>
   </SidebarHeader>
 
-  <SidebarContent className="overflow-x-hidden">
+  <SidebarContent className="overflow-x-hidden py-2">
     {/* Quick Actions */}
   
     {/* Main Navigation */}
@@ -168,6 +169,14 @@ const AppSidebar = () => {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/settings" className="flex items-center gap-2">
+                <Trash className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Trash</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/settings" className="flex items-center gap-2">
@@ -176,6 +185,8 @@ const AppSidebar = () => {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

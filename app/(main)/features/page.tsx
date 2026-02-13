@@ -43,11 +43,11 @@ export default function FeaturesPage() {
   }, []);
 
   return (
-    <main className="bg-gradient-to-b from-white via-blue-50/50 to-white text-black">
+    <main className="">
 
       {/* HERO */}
-      <section className="py-24 px-6 text-center reveal">
-        <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
+      <section className="py-24 px-6 text-center reveal max-w-4xl mx-auto ">
+        <h1 className="text-4xl  md:text-6xl text-center  font-semibold tracking-normal">
           Powerful features for modern healthcare records
         </h1>
 
@@ -107,7 +107,7 @@ export default function FeaturesPage() {
           ].map((item) => (
             <div
               key={item}
-              className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm"
+              className="p-6 rounded-2xl dark:bg-neutral-950 border  shadow-sm"
             >
               <p className="font-medium">{item}</p>
             </div>
@@ -171,8 +171,8 @@ function FeatureCard({
   desc: string;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition">
-      <div className="w-11 h-11 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+    <div className="p-6 rounded-2xl dark:bg-neutral-950 border shadow-sm hover:shadow-md transition">
+      <div className="w-11 h-11 flex items-center justify-center rounded-lg dark:bg-neutral-800 text-blue-600">
         {icon}
       </div>
 
@@ -192,8 +192,8 @@ function UseCase({
   title: string;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm text-center">
-      <div className="w-12 h-12 mx-auto flex items-center justify-center rounded-full bg-blue-50 text-indigo-600">
+    <div className="p-6 rounded-2xl dark:bg-neutral-950  border shadow-sm text-center">
+      <div className="w-12 h-12 mx-auto flex items-center justify-center rounded-full dark:bg-neutral-900 text-blue-600">
         {icon}
       </div>
 
