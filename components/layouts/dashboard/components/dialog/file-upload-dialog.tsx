@@ -303,7 +303,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
               className={cn(
                 "border-2 border-dashed rounded-lg p-6 transition-colors",
                 isDragging ? "border-primary bg-primary/5" : "border",
-                selectedFile ? "" : "dark:hover:bg-neutral-95 hover:bg-blue-50 cursor-pointer",
+                selectedFile ? "" : "dark:hover:bg-neutral-950 hover:bg-blue-50 cursor-pointer",
                 (fileTypeError || fileSizeError) ? "border-red-500" : ""
               )}
               onDragOver={handleDragOver}
