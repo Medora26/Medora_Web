@@ -68,7 +68,7 @@ const toggleTheme = () => {
 
   return (
     <header className="sticky top-0 z-30 flex h-18 justify-between items-center gap-4 border-b bg-background px-4 md:px-6">
-      <SidebarTrigger />
+      {/* <SidebarTrigger /> */}
       
       {/* Search Bar - Clean and minimal */}
       <div className="flex-1 max-w-md">
@@ -105,9 +105,9 @@ const toggleTheme = () => {
         {/* User Dropdown - Just avatar */}
       <DropdownMenu>
   <DropdownMenuTrigger asChild>
-    <Button variant="default" className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 p-0">
+    <Button variant="default" className="h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-700 p-0">
       <Avatar className="h-8 w-8">
-        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-md">
+        <AvatarFallback className="bg-blue-500 font-semibold text-white text-md">
           {user?.displayName?.slice(0,1)}
         </AvatarFallback>
       </Avatar>

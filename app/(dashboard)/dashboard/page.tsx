@@ -20,7 +20,7 @@ const Dashboard = () => {
   return (
    
   <DashboardLayout>
-    hi
+    Dashboard
   </DashboardLayout>
   
   )
