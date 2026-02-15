@@ -5,15 +5,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Upload, FileText, X, FileImage, File } from 'lucide-react';
+import { CalendarIcon, Upload, FileText, X, FileImage, File, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import React, { useState, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/context/auth/authContext';
+import { uploadToCloudinary } from '@/lib/cloudinary/file-upload/file-upload';
+import { saveDocumentMetadata } from '@/lib/firebase/service/uploadFile/service';
+import { toast } from 'sonner';
 
 interface FileDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  patientId?: string; // Optional: if you want to associate with specific patient
 }
 
 // File type categories for filtering
@@ -55,7 +60,8 @@ const DOCUMENT_CATEGORIES = [
 // Max file size in bytes (1MB)
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
 
-const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
+const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
+  const { user: currentUserData } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [documentName, setDocumentName] = useState('');
@@ -66,6 +72,8 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [fileTypeError, setFileTypeError] = useState<string | null>(null);
   const [fileSizeError, setFileSizeError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get file type category
@@ -178,34 +186,82 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedFile) return;
-    
-    // Get file type category for filtering
-    const fileTypeCategory = getFileTypeCategory(selectedFile);
-    
-    // Handle form submission here
-    console.log({
-      file: selectedFile,
-      fileType: selectedFile.type,
-      fileTypeCategory, // This will help with filtering by file type
-      documentName,
-      documentDate,
-      category,
-      description,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-    });
-    
-    // Reset form and close
-    handleRemoveFile();
-    setDocumentName('');
-    setDocumentDate(undefined);
-    setCategory('');
-    setDescription('');
-    setTags('');
-    onClose();
+    if (!selectedFile || !currentUserData) {
+      toast.error('Please select a file and ensure you are logged in');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Step 1: Upload to Cloudinary
+      const cloudinaryResponse = await uploadToCloudinary(
+        selectedFile,
+        currentUserData.uid,
+         (progress) => {
+        setUploadProgress(progress);
+      });
+
+      if (!cloudinaryResponse) {
+        throw new Error('Failed to upload to Cloudinary');
+      }
+
+      // Step 2: Get file type category
+      const fileTypeCategory = getFileTypeCategory(selectedFile);
+
+      // Step 3: Prepare metadata for Firestore
+      const documentData = {
+        userId: currentUserData.uid,
+        patientId: patientId || null, // If no patientId, it's a general user document
+        documentName,
+        documentDate: documentDate ? format(documentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        category,
+        categoryLabel: DOCUMENT_CATEGORIES.find(c => c.value === category)?.label || category,
+        description,
+        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        fileInfo: {
+          name: selectedFile.name,
+          size: selectedFile.size,
+          type: selectedFile.type,
+          fileTypeCategory,
+        },
+        cloudinary: {
+          publicId: cloudinaryResponse.public_id,
+          url: cloudinaryResponse.secure_url,
+          thumbnailUrl: cloudinaryResponse.secure_url.replace('/upload/', '/upload/w_200,h_200,c_fill/'), // Generate thumbnail URL
+          format: cloudinaryResponse.format,
+          bytes: cloudinaryResponse.bytes,
+          originalFilename: cloudinaryResponse.original_filename,
+        },
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Step 4: Save metadata to Firestore
+      const docId = await saveDocumentMetadata(documentData);
+
+      toast.success('Document uploaded successfully!');
+      
+      // Reset form and close
+      handleRemoveFile();
+      setDocumentName('');
+      setDocumentDate(undefined);
+      setCategory('');
+      setDescription('');
+      setTags('');
+      onClose();
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Failed to upload document. Please try again.');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   // Get icon based on file type
@@ -232,12 +288,10 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='sm:max-w-2xl max-h-[70vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">Upload Medical Documents</DialogTitle>
-          <DialogDescription
-           className='font-semibold'
-          >
+          <DialogTitle className="text-2xl">Upload Medical Documents</DialogTitle>
+          <DialogDescription>
             Upload and organize your medical documents securely with Medora. 
-           
+            Add details to make them easily searchable and filterable.
           </DialogDescription>
         </DialogHeader>
 
@@ -249,13 +303,13 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
               className={cn(
                 "border-2 border-dashed rounded-lg p-6 transition-colors",
                 isDragging ? "border-primary bg-primary/5" : "border",
-                selectedFile ? "" : "dark:hover:bg-neutral-950 hover:bg-blue-50 cursor-pointer",
+                selectedFile ? "" : "dark:hover:bg-neutral-95 hover:bg-blue-50 cursor-pointer",
                 (fileTypeError || fileSizeError) ? "border-red-500" : ""
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => !selectedFile && fileInputRef.current?.click()}
+              onClick={() => !selectedFile && !isUploading && fileInputRef.current?.click()}
             >
               <input
                 ref={fileInputRef}
@@ -263,13 +317,26 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
                 id="file"
                 className="hidden"
                 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                disabled={isUploading}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileSelect(file);
                 }}
               />
               
-              {selectedFile ? (
+              {isUploading ? (
+                <div className="text-center py-4">
+                  <Loader2 className="mx-auto h-12 w-12 text-blue-600 animate-spin" />
+                  <p className="mt-2 text-sm text-gray-600">Uploading to Cloudinary...</p>
+                  <div className="mt-2 h-2 bg-gray-200 rounded-full max-w-md mx-auto">
+                    <div 
+                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">{uploadProgress}% complete</p>
+                </div>
+              ) : selectedFile ? (
                 <div className="flex items-center gap-4">
                   {previewUrl ? (
                     <div className="relative w-20 h-20 rounded-lg overflow-hidden">
@@ -298,20 +365,21 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
                       e.stopPropagation();
                       handleRemoveFile();
                     }}
+                    disabled={isUploading}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <div className="text-center space-y-1 flex flex-col items-center">
+                <div className="text-center">
                   <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 font-bold text-sm text-gray-400">
+                  <p className="mt-2 text-sm text-gray-600">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs max-w-md text-center font-semibold text-gray-200">
+                  <p className="text-xs text-gray-500">
                     Supported formats: Images (JPEG, PNG, GIF, WEBP), PDF, Documents (DOC, DOCX), Spreadsheets (XLS, XLSX)
                   </p>
-                  <p className="text-xs font-medium text-blue-400 mt-1">
+                  <p className="text-xs font-medium text-blue-600 mt-1">
                     Maximum file size: 1MB
                   </p>
                 </div>
@@ -333,6 +401,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
               placeholder="e.g., Chest X-Ray 2024"
+              disabled={isUploading}
               required
             />
           </div>
@@ -340,7 +409,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
           {/* Document Category */}
           <div className="space-y-2">
             <Label htmlFor="category">Document Category *</Label>
-            <Select value={category} onValueChange={handleCategoryChange} required>
+            <Select value={category} onValueChange={handleCategoryChange} disabled={isUploading} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select document category" />
               </SelectTrigger>
@@ -379,6 +448,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
                     "w-full justify-start text-left font-normal",
                     !documentDate && "text-muted-foreground"
                   )}
+                  disabled={isUploading}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {documentDate ? format(documentDate, "PPP") : <span>Select date</span>}
@@ -390,6 +460,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
                   selected={documentDate}
                   onSelect={setDocumentDate}
                   initialFocus
+                  disabled={isUploading}
                 />
               </PopoverContent>
             </Popover>
@@ -404,6 +475,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add any additional notes about this document..."
               rows={3}
+              disabled={isUploading}
             />
           </div>
 
@@ -415,6 +487,7 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., cardiology, follow-up, urgent (comma separated)"
+              disabled={isUploading}
             />
             <p className="text-xs text-gray-500">
               Add tags to improve searchability and filtering
@@ -423,14 +496,21 @@ const FileUploadDialog = ({ isOpen, onClose }: FileDialogProps) => {
 
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isUploading}>
               Cancel
             </Button>
             <Button 
               type="submit" 
-              disabled={!selectedFile || !documentName || !category || !documentDate || !!fileSizeError}
+              disabled={!selectedFile || !documentName || !category || !documentDate || !!fileSizeError || isUploading}
             >
-              Upload Document
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Upload Document'
+              )}
             </Button>
           </div>
         </form>

@@ -54,7 +54,7 @@ export default function Navbar() {
             alt="Medora"
             width={90}
             height={10}
-            className="w-24 object-contain"
+            className="w-20 object-contain"
             priority
           />
         </Link>
