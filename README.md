@@ -2,7 +2,7 @@
 
 # 🩺 MEDORA  
 ### Your Digital Health Drive 💾🛡️  
-# 💌Medora Auth Pages:
+# 💌Medora Auth Pages
 <div align="center">
   <table>
     <tr>
