@@ -58,8 +58,8 @@ MEDORA aims to:
 
 MEDORA follows a **secure, scalable, and modular architecture** ensuring privacy-first healthcare data management.
 
-<div align="center">
-  <img src="./system-architecture/system-architecture.png" alt="System Architecture Diagram" width="720"/>
+<div align="left">
+  <img src="./public/system-architecture/system-architecture.png" alt="System Architecture Diagram" width="720"/>
   <br />
   <em>High-level system architecture of MEDORA</em>
 </div>
@@ -77,8 +77,8 @@ MEDORA follows a **secure, scalable, and modular architecture** ensuring privacy
 
 The upload flow is designed to ensure **security, validation, and real-time availability**.
 
-<div align="center">
-  <img src="./system-architecture/file_upload-process.png" alt="File Upload Process Diagram" width="720"/>
+<div align="left">
+  <img src="./public/system-architecture/file_upload-process.png" alt="File Upload Process Diagram" width="720"/>
   <br />
   <em>Medical document upload workflow</em>
 </div>
