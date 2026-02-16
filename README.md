@@ -78,7 +78,7 @@ MEDORA follows a **secure, scalable, and modular architecture** ensuring privacy
 The upload flow is designed to ensure **security, validation, and real-time availability**.
 
 <div align="left">
-  <img src="./public/system-architecture/file_upload-process.png" alt="File Upload Process Diagram" width="720"/>
+  <img src="./public/system-architecture/file-upload.png" alt="File Upload Process Diagram" width="720"/>
   <br />
   <em>Medical document upload workflow</em>
 </div>
