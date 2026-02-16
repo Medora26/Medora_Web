@@ -1,3 +1,4 @@
+'use client'
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -5,20 +6,22 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Upload, FileText, X, FileImage, File, Loader2 } from 'lucide-react';
+import { CalendarIcon, Upload, FileText, X, FileImage, File, Loader2, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import React, { useState, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/context/auth/authContext';
-import { uploadToCloudinary } from '@/lib/cloudinary/file-upload/file-upload';
+import { uploadToCloudinary, validateFile, extractFileInfo } from '@/lib/cloudinary/file-upload/file-upload';
 import { saveDocumentMetadata } from '@/lib/firebase/service/uploadFile/service';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface FileDialogProps {
   isOpen: boolean;
   onClose: () => void;
   patientId?: string; // Optional: if you want to associate with specific patient
+  onSuccess?: (documentId: string) => void; // Callback after successful upload
 }
 
 // File type categories for filtering
@@ -60,7 +63,7 @@ const DOCUMENT_CATEGORIES = [
 // Max file size in bytes (1MB)
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
 
-const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
+const FileUploadDialog = ({ isOpen, onClose, patientId, onSuccess }: FileDialogProps) => {
   const { user: currentUserData } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -74,6 +77,8 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
   const [fileSizeError, setFileSizeError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<'cloudinary' | 'firestore' | null>(null);
+  const [starAfterUpload, setStarAfterUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get file type category
@@ -101,23 +106,27 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
     setFileTypeError(null);
     setFileSizeError(null);
     
-    // Check file type
-    const validTypes = [
-      ...FILE_TYPE_CATEGORIES.image,
-      ...FILE_TYPE_CATEGORIES.pdf,
-      ...FILE_TYPE_CATEGORIES.document,
-      ...FILE_TYPE_CATEGORIES.spreadsheet,
-      ...FILE_TYPE_CATEGORIES.text,
-    ];
-    
-    if (!validTypes.includes(file.type)) {
-      setFileTypeError('Unsupported file type. Please upload images, PDFs, documents, or spreadsheets.');
+    // Check file size first (1MB max)
+    if (file.size > MAX_FILE_SIZE) {
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+      setFileSizeError(`File size exceeds 1MB limit. Current size: ${sizeInMB}MB`);
       return;
     }
 
-    // Check file size (max 1MB)
-    if (file.size > MAX_FILE_SIZE) {
-      setFileSizeError(`File size should be less than 1MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    // Validate file using the enhanced validation
+    const validation = validateFile(file, {
+      maxSizeMB: 1, // Set to 1MB
+      allowedTypes: [
+        ...FILE_TYPE_CATEGORIES.image,
+        ...FILE_TYPE_CATEGORIES.pdf,
+        ...FILE_TYPE_CATEGORIES.document,
+        ...FILE_TYPE_CATEGORIES.spreadsheet,
+        ...FILE_TYPE_CATEGORIES.text,
+      ]
+    });
+
+    if (!validation.valid) {
+      setFileTypeError(validation.error || 'Invalid file type');
       return;
     }
 
@@ -186,83 +195,143 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!selectedFile || !currentUserData) {
+    toast.error('Please select a file and ensure you are logged in');
+    return;
+  }
+
+  // Double-check file size before upload
+  if (selectedFile.size > MAX_FILE_SIZE) {
+    const sizeInMB = (selectedFile.size / (1024 * 1024)).toFixed(2);
+    toast.error(`File size exceeds 1MB limit. Current size: ${sizeInMB}MB`);
+    return;
+  }
+
+  setIsUploading(true);
+  setUploadProgress(0);
+  setUploadStage('cloudinary');
+
+  // DEBUG: Log initial star state
+  console.log('🔍 [DEBUG] Star after upload checkbox state:', {
+    starAfterUpload,
+    type: typeof starAfterUpload,
+    value: starAfterUpload
+  });
+
+  try {
+    // Step 1: Upload to Cloudinary with enhanced options
+    setUploadStage('cloudinary');
+    toast.info('Uploading to Cloudinary...');
     
-    if (!selectedFile || !currentUserData) {
-      toast.error('Please select a file and ensure you are logged in');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      // Step 1: Upload to Cloudinary
-      const cloudinaryResponse = await uploadToCloudinary(
-        selectedFile,
-        currentUserData.uid,
-         (progress) => {
-        setUploadProgress(progress);
-      });
-
-      if (!cloudinaryResponse) {
-        throw new Error('Failed to upload to Cloudinary');
+    const cloudinaryResponse = await uploadToCloudinary(
+      selectedFile,
+      currentUserData.uid,
+      {
+        onProgress: (progress) => {
+          setUploadProgress(progress);
+        },
+        generateThumbnail: true,
+        patientId: patientId,
+        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag)
       }
+    );
 
-      // Step 2: Get file type category
-      const fileTypeCategory = getFileTypeCategory(selectedFile);
-
-      // Step 3: Prepare metadata for Firestore
-      const documentData = {
-        userId: currentUserData.uid,
-        patientId: patientId || null, // If no patientId, it's a general user document
-        documentName,
-        documentDate: documentDate ? format(documentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-        category,
-        categoryLabel: DOCUMENT_CATEGORIES.find(c => c.value === category)?.label || category,
-        description,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        fileInfo: {
-          name: selectedFile.name,
-          size: selectedFile.size,
-          type: selectedFile.type,
-          fileTypeCategory,
-        },
-        cloudinary: {
-          publicId: cloudinaryResponse.public_id,
-          url: cloudinaryResponse.secure_url,
-          thumbnailUrl: cloudinaryResponse.secure_url.replace('/upload/', '/upload/w_200,h_200,c_fill/'), // Generate thumbnail URL
-          format: cloudinaryResponse.format,
-          bytes: cloudinaryResponse.bytes,
-          originalFilename: cloudinaryResponse.original_filename,
-        },
-        uploadedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Step 4: Save metadata to Firestore
-      const docId = await saveDocumentMetadata(documentData);
-
-      toast.success('Document uploaded successfully!');
-      
-      // Reset form and close
-      handleRemoveFile();
-      setDocumentName('');
-      setDocumentDate(undefined);
-      setCategory('');
-      setDescription('');
-      setTags('');
-      onClose();
-
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Failed to upload document. Please try again.');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+    if (!cloudinaryResponse) {
+      throw new Error('Failed to upload to Cloudinary');
     }
-  };
+
+    // DEBUG: Log Cloudinary response
+    console.log('🔍 [DEBUG] Cloudinary upload successful:', {
+      publicId: cloudinaryResponse.public_id,
+      hasThumbnail: !!cloudinaryResponse.thumbnail_url
+    });
+
+    // Step 2: Extract enhanced file info
+    const fileInfo = extractFileInfo(cloudinaryResponse);
+    const fileTypeCategory = getFileTypeCategory(selectedFile);
+
+    // Step 3: Prepare metadata for Firestore
+    setUploadStage('firestore');
+    setUploadProgress(0);
+    toast.info('Saving document metadata...');
+
+    // Prepare document data with proper typing
+    const documentData = {
+      userId: currentUserData.uid,
+      userEmail: currentUserData.email || undefined,
+      patientId: patientId || null,
+      documentName,
+      documentDate: documentDate ? format(documentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      category,
+      categoryLabel: DOCUMENT_CATEGORIES.find(c => c.value === category)?.label || category,
+      description: description || '',
+      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      fileInfo: {
+        name: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+        fileTypeCategory,
+      },
+      cloudinary: fileInfo,
+      isStarred: starAfterUpload,
+    };
+
+    // DEBUG: Log the document data being sent to Firestore
+    console.log('🔍 [DEBUG] Document data being sent to Firestore:', {
+      userId: documentData.userId,
+      documentName: documentData.documentName,
+      isStarred: documentData.isStarred,
+      isStarredType: typeof documentData.isStarred,
+      starAfterUploadValue: starAfterUpload,
+      fullData: documentData
+    });
+
+    // Save to Firestore
+    const docId = await saveDocumentMetadata(documentData);
+
+    // DEBUG: Log after Firestore save
+    console.log('🔍 [DEBUG] Firestore save complete:', {
+      docId,
+      starAfterUpload,
+      expectedStarredValue: starAfterUpload
+    });
+
+    // Success message with star status
+    if (starAfterUpload) {
+      console.log('🔍 [DEBUG] Showing starred success message (starAfterUpload = true)');
+      toast.success('Document uploaded and starred successfully!');
+    } else {
+      console.log('🔍 [DEBUG] Showing non-starred success message (starAfterUpload = false)');
+      toast.success('Document uploaded successfully! but not starred');
+    }
+
+    // Call onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess(docId);
+    }
+    
+    // Reset form and close
+    handleRemoveFile();
+    setDocumentName('');
+    setDocumentDate(undefined);
+    setCategory('');
+    setDescription('');
+    setTags('');
+    setStarAfterUpload(false);
+    onClose();
+
+  } catch (error) {
+    console.error('❌ [DEBUG] Upload failed:', error);
+    toast.error('Failed to upload document. Please try again.');
+  } finally {
+    setIsUploading(false);
+    setUploadProgress(0);
+    setUploadStage(null);
+  }
+};
 
   // Get icon based on file type
   const getFileIcon = (file: File) => {
@@ -284,9 +353,21 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
     return (bytes / 1024 / 1024).toFixed(2) + ' MB';
   };
 
+  // Get upload stage message
+  const getUploadStageMessage = () => {
+    switch (uploadStage) {
+      case 'cloudinary':
+        return 'Uploading to Cloudinary...';
+      case 'firestore':
+        return 'Saving document metadata...';
+      default:
+        return 'Uploading...';
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-2xl max-h-[70vh] overflow-y-auto'>
+      <DialogContent className='sm:max-w-2xl max-h-[85vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle className="text-2xl">Upload Medical Documents</DialogTitle>
           <DialogDescription>
@@ -302,7 +383,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
             <div
               className={cn(
                 "border-2 border-dashed rounded-lg p-6 transition-colors",
-                isDragging ? "border-primary bg-primary/5" : "border",
+                isDragging ? "border-primary bg-primary/5" : "border-border",
                 selectedFile ? "" : "dark:hover:bg-neutral-950 hover:bg-blue-50 cursor-pointer",
                 (fileTypeError || fileSizeError) ? "border-red-500" : ""
               )}
@@ -327,7 +408,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
               {isUploading ? (
                 <div className="text-center py-4">
                   <Loader2 className="mx-auto h-12 w-12 text-blue-600 animate-spin" />
-                  <p className="mt-2 text-sm text-gray-600">Uploading to Cloudinary...</p>
+                  <p className="mt-2 text-sm font-medium text-gray-700">{getUploadStageMessage()}</p>
                   <div className="mt-2 h-2 bg-gray-200 rounded-full max-w-md mx-auto">
                     <div 
                       className="h-full bg-blue-600 rounded-full transition-all duration-300"
@@ -377,7 +458,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
                     Click to upload or drag and drop
                   </p>
                   <p className="text-xs text-gray-500">
-                    Supported formats: Images (JPEG, PNG, GIF, WEBP), PDF, Documents (DOC, DOCX), Spreadsheets (XLS, XLSX)
+                    Supported formats: Images (JPEG, PNG, GIF, WEBP, TIFF), PDF, Documents (DOC, DOCX), Spreadsheets (XLS, XLSX)
                   </p>
                   <p className="text-xs font-medium text-blue-600 mt-1">
                     Maximum file size: 1MB
@@ -392,6 +473,36 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
               <p className="text-sm text-red-500 mt-1">{fileSizeError}</p>
             )}
           </div>
+
+          {/* Star after upload option */}
+         {/*  // Update the checkbox section in the JSX: */}
+{selectedFile && !isUploading && (
+  <div className="flex items-center space-x-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+    <Checkbox 
+      id="starAfterUpload" 
+      checked={starAfterUpload}
+      onCheckedChange={(checked) => {
+        // DEBUG: Log checkbox change
+        console.log('🔍 [DEBUG] Checkbox changed:', {
+          checked,
+          checkedType: typeof checked,
+          willSetTo: checked === true
+        });
+        setStarAfterUpload(checked === true);
+      }}
+    />
+    <Label 
+      htmlFor="starAfterUpload" 
+      className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+    >
+      <Star className={cn(
+        "h-4 w-4",
+        starAfterUpload ? "fill-blue-400 text-blue-400" : "text-gray-400"
+      )} />
+      Star this document after upload (mark as important)
+    </Label>
+  </div>
+)}
 
           {/* Document Name */}
           <div className="space-y-2">
@@ -415,7 +526,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
               </SelectTrigger>
               <SelectContent>
                 {/* Group Scan Reports */}
-                <div className="px-2 py-1.5 text-xs font-semibold opacity-70">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Scan Reports
                 </div>
                 {DOCUMENT_CATEGORIES.filter(cat => cat.group === 'Scan Reports').map((cat) => (
@@ -425,7 +536,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
                 ))}
                 
                 {/* Group Documents */}
-                <div className="px-2 py-1.5 text-xs font-semibold opacity-70 mt-2">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">
                   Documents
                 </div>
                 {DOCUMENT_CATEGORIES.filter(cat => cat.group === 'Documents').map((cat) => (
@@ -443,6 +554,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
@@ -502,11 +614,12 @@ const FileUploadDialog = ({ isOpen, onClose, patientId }: FileDialogProps) => {
             <Button 
               type="submit" 
               disabled={!selectedFile || !documentName || !category || !documentDate || !!fileSizeError || isUploading}
+              className="min-w-[140px]"
             >
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  {uploadStage === 'cloudinary' ? 'Uploading...' : 'Saving...'}
                 </>
               ) : (
                 'Upload Document'

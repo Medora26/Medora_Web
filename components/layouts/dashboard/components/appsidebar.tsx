@@ -32,11 +32,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LOGO } from '@/public/logo/logo';
 import { useAuth } from '@/context/auth/authContext';
 import { signOutUser } from '@/lib/firebase/service/auth';
 import FileUploadDialog from '../components/dialog/file-upload-dialog';
+import { PatientService } from '@/lib/firebase/service/patients/service'; // Import PatientService
 
 // Define types for navigation items
 interface NavItem {
@@ -57,7 +58,73 @@ const AppSidebar = () => {
   const router = useRouter();
   const [isStudiesOpen, setIsStudiesOpen] = useState(true);
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
-  const {user:currentUserData} = useAuth();
+  const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(undefined);
+  const [isLoadingPatient, setIsLoadingPatient] = useState(false);
+  const {user: currentUserData} = useAuth();
+
+  // Get current patient ID from URL or context
+  useEffect(() => {
+    const getCurrentPatient = async () => {
+      if (!currentUserData?.uid) return;
+      
+      setIsLoadingPatient(true);
+      try {
+        // Method 1: If the current user is a patient themselves
+        const patientProfile = await PatientService.getPatientProfile(currentUserData.uid);
+        if (patientProfile) {
+          setCurrentPatientId(currentUserData.uid);
+          return;
+        }
+
+        // Method 2: If this is a healthcare provider viewing a specific patient
+        // Get patient ID from URL if you're on a patient-specific page
+        const pathSegments = window.location.pathname.split('/');
+        const patientIndex = pathSegments.indexOf('patient');
+        if (patientIndex !== -1 && pathSegments[patientIndex + 1]) {
+          setCurrentPatientId(pathSegments[patientIndex + 1]);
+          return;
+        }
+
+        // Method 3: Check if there's a selected patient in session/localStorage
+        const selectedPatientId = localStorage.getItem('selectedPatientId');
+        if (selectedPatientId) {
+          setCurrentPatientId(selectedPatientId);
+          return;
+        }
+
+        // No patient context found
+        setCurrentPatientId(undefined);
+      } catch (error) {
+        console.error('Error getting patient context:', error);
+        setCurrentPatientId(undefined);
+      } finally {
+        setIsLoadingPatient(false);
+      }
+    };
+
+    getCurrentPatient();
+  }, [currentUserData?.uid, router]);
+
+  // Listen for route changes to update patient ID
+  useEffect(() => {
+    const handleRouteChange = () => {
+      const pathSegments = window.location.pathname.split('/');
+      const patientIndex = pathSegments.indexOf('patient');
+      if (patientIndex !== -1 && pathSegments[patientIndex + 1]) {
+        setCurrentPatientId(pathSegments[patientIndex + 1]);
+      } else {
+        // If not on a patient page, clear the patient ID
+        setCurrentPatientId(undefined);
+      }
+    };
+
+    // Initial check
+    handleRouteChange();
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
 
   // Main navigation items with proper typing
   const navItems: NavItem[] = [
@@ -76,6 +143,8 @@ const AppSidebar = () => {
   const handleSignOut = async () => {
       try {
         await signOutUser();
+        // Clear selected patient on logout
+        localStorage.removeItem('selectedPatientId');
         window.location.href = "/sign-in";
         toast.success(`${currentUserData?.displayName} logout successfully`);
       } catch (error) {
@@ -265,7 +334,20 @@ const AppSidebar = () => {
       {/* File Upload Dialog */}
       <FileUploadDialog 
         isOpen={fileDialogOpen} 
+        patientId={currentPatientId} // Pass the current patient ID
         onClose={() => setFileDialogOpen(false)}
+        onSuccess={(documentId) => {
+          // Optionally handle success, e.g., refresh document list or navigate
+          console.log('Document uploaded successfully:', documentId);
+          // If you're on a patient page, you might want to refresh the patient's documents
+          if (currentPatientId) {
+            // You can emit an event or use a state management solution
+            // to refresh the document list
+            window.dispatchEvent(new CustomEvent('documentUploaded', { 
+              detail: { patientId: currentPatientId, documentId } 
+            }));
+          }
+        }}
       />
     </>
   );
