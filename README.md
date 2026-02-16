@@ -54,31 +54,67 @@ MEDORA aims to:
 - ⚡ **Make healthcare data usable and accessible**  
 
 ---
+## 🏗️ System Architecture
 
+MEDORA follows a **secure, scalable, and modular architecture** ensuring privacy-first healthcare data management.
+
+<div align="center">
+  <img src="./system-architecture/system-architecture.png" alt="System Architecture Diagram" width="720"/>
+  <br />
+  <em>High-level system architecture of MEDORA</em>
+</div>
+
+### 🔁 Architecture Overview
+- 🖥️ **Client (Next.js App)** handles UI and user interactions  
+- 🔐 **Firebase Auth** manages secure authentication  
+- 📦 **Firestore** stores user metadata and document references  
+- ☁️ **Cloudinary** securely stores medical files  
+- ▲ **Vercel** enables fast global deployment  
+
+---
+
+## 📤 File Upload Process
+
+The upload flow is designed to ensure **security, validation, and real-time availability**.
+
+<div align="center">
+  <img src="./system-architecture/file_upload-process.png" alt="File Upload Process Diagram" width="720"/>
+  <br />
+  <em>Medical document upload workflow</em>
+</div>
+
+### 🔄 Upload Flow
+1. 👤 User selects a medical document  
+2. 🧪 Client-side validation (type & size)  
+3. ☁️ Secure upload to Cloudinary  
+4. 🆔 Metadata stored in Firestore  
+5. 🔄 Real-time sync to dashboard  
+
+---
 ## 💡 Key Features
 
 <img align="right" src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" width="260"/>
 
-### 📂 **Medical Data Storage**
+### 📂 Medical Data Storage
 Upload reports, prescriptions, and medical history like a cloud drive.
 
-### 🔐 **Privacy-First Architecture**
+### 🔐 Privacy-First Architecture
 User-controlled access and secure handling of sensitive data.
 
-### 🛡️ **Insurance Integration**
+### 🛡️ Insurance Integration
 Apply for medical insurance directly from MEDORA.
 
-### 🧾 **Clean Record Organization**
+### 🧾 Clean Record Organization
 Structured and searchable health records.
 
-### 🌓 **Dark/Light Mode**
+### 🌓 Dark / Light Mode
 Seamless theme switching with persistent user preference.
 
-### 📱 **Responsive Design**
-Fully optimized for desktop, tablet, and mobile devices.
+### 📱 Responsive Design
+Optimized for desktop, tablet, and mobile devices.
 
-### 🔄 **Real-time Updates**
-Instant synchronization across all your devices.
+### 🔄 Real-time Updates
+Instant synchronization across all devices.
 
 ---
 
@@ -86,103 +122,50 @@ Instant synchronization across all your devices.
 
 <div align="center">
 
-| **Category** | **Technologies** |
-|-------------|------------------|
-| **Frontend** | ⚛️ Next.js 15 (App Router) • 📘 TypeScript • 🔄 React 19 |
-| **Styling** | 🎨 Tailwind CSS • 🎭 Shadcn/ui • 🎯 Framer Motion • 🧩 Lucide Icons |
-| **Authentication** | 🔥 Firebase Auth • 🔐 Email/Password • 📧 OTP • 🟢 Google OAuth |
-| **Database** | 📦 Firestore (NoSQL) • 📊 Real-time updates |
-| **Storage** | ☁️ Cloudinary • 🖼️ Image optimization • 📄 PDF support |
-| **State Management** | 🧠 React Context • 🔄 Custom Hooks |
-| **Deployment** | ▲ Vercel • 🌐 Edge Functions |
-| **Analytics** | 📈 Google Analytics • 🔍 Error Tracking |
+| Category | Technologies |
+|--------|-------------|
+| **Frontend** | Next.js 15 (App Router), TypeScript, React 19 |
+| **Styling** | Tailwind CSS, shadcn/ui, Framer Motion, Lucide Icons |
+| **Authentication** | Firebase Auth (Email, OTP, Google OAuth) |
+| **Database** | Firestore (NoSQL, real-time sync) |
+| **Storage** | Cloudinary (Images & PDFs) |
+| **State** | React Context, Custom Hooks |
+| **Deployment** | Vercel, Edge Functions |
+| **Analytics** | Google Analytics, Error Tracking |
 
 </div>
 
-<div align="center">
-  <img src="https://media.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif" width="420"/>
-  <br />
-  <em>Built with scalability, security, and performance in mind 🚀</em>
-</div>
-
 ---
 
-## 📂 Directory Breakdown
+## 📂 Directory Structure
 
-### 🎯 **`/app` - Next.js App Router**
-The core application routes and pages using Next.js 15 App Router.
+### `/app`
+Next.js App Router pages and layouts.
 
-| Path | Purpose |
-|------|---------|
-| `(auth)/` | Public authentication pages (sign-in, sign-up, forgot-password) |
-| `(onboarding)/` | Protected onboarding flow for new users |
-| `(dashboard)/` | Protected dashboard pages for authenticated users |
-| `layout.tsx` | Root layout with ThemeProvider and AuthProvider |
-| `page.tsx` | Landing page |
+### `/components`
+Reusable UI components and layouts.
 
----
+### `/context`
+Global auth and theme state management.
 
-### 🧩 **`/components` - Reusable UI Components**
+### `/lib`
+Firebase, Cloudinary, and utility helpers.
 
-| Directory | Purpose |
-|----------|---------|
-| `ui/` | Shadcn/ui component library (button, card, input, etc.) |
-| `layouts/` | Layout wrappers for auth and dashboard sections |
-| `shared/` | Cross-cutting components (theme toggle, spinner, error boundary) |
+### `/public`
+Static assets and preview images.
 
----
+### `/types`
+TypeScript interfaces and data models.
 
-### 🧠 **`/context` - React Context Providers**
-
-| File | Purpose |
-|------|---------|
-| `auth-context.tsx` | Global authentication state and onboarding status |
-| `theme-context.tsx` | Dark/light theme management with localStorage persistence |
-
----
-
-### 🔧 **`/lib` - Utilities & Services**
-
-| Directory | Purpose |
-|----------|---------|
-| `firebase/` | Firebase configuration and service methods |
-| `cloudinary/` | Cloudinary upload utilities |
-| `utils/` | Helper functions (date formatting, validation, constants) |
-
----
-
-### 🖼️ **`/public` - Static Assets**
-
-| Path | Purpose |
-|------|---------|
-| `dark.png` | Dark mode homepage preview for README |
-| `light.png` | Light mode homepage preview for README |
-| `logo/` | Brand assets in multiple formats and themes |
-
----
-
-### 📝 **`/types` - TypeScript Definitions**
-
-| Directory | Purpose |
-|----------|---------|
-| `auth/` | Authentication-related interfaces and types |
-| `user/` | User profile and onboarding data structures |
-| `documents/` | Document and upload types |
-
----
-
-### 🎨 **`/styles` - Global Styles**
-
-| File | Purpose |
-|------|---------|
-| `globals.css` | Tailwind imports and CSS variables for theming |
+### `/styles`
+Global styles and Tailwind configuration.
 
 ---
 
 ## 🔐 Environment Variables
 
 ```env
-# Firebase Configuration
+# Firebase
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -190,7 +173,7 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-# Cloudinary Configuration
+# Cloudinary
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 
