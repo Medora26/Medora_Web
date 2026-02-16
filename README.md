@@ -2,14 +2,28 @@
 
 # 🩺 MEDORA  
 ### Your Digital Health Drive 💾🛡️  
-
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZDV5cG1pZWt0d3N2Z3Z1M2p6a3l0Y3N0Y3d0eHZqM2F4b2x6bCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26ufdipQqU2lhNA4g/giphy.gif" width="420"/>
-
+# 💌Medora Auth Pages:
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="./public/reg-light.png" alt="MEDORA Light Mode" width="400"/>
+        <br />
+        <em>🌞 Light Theme</em>
+      </td>
+      <td align="center">
+        <img src="./public/register.png" alt="MEDORA Dark Mode" width="400"/>
+        <br />
+        <em>🌚 Dark Theme</em>
+      </td>
+    </tr>
+  </table>
+</div>
 **Secure • Organized • User-Controlled Healthcare Data**
 
 ---
 
-## 🏠 Home Page Preview
+# 🏠 Home Page Preview
 
 <div align="center">
   <table>
