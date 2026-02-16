@@ -135,32 +135,6 @@ Instant synchronization across all devices.
 
 </div>
 
----
-
-## 📂 Directory Structure
-
-### `/app`
-Next.js App Router pages and layouts.
-
-### `/components`
-Reusable UI components and layouts.
-
-### `/context`
-Global auth and theme state management.
-
-### `/lib`
-Firebase, Cloudinary, and utility helpers.
-
-### `/public`
-Static assets and preview images.
-
-### `/types`
-TypeScript interfaces and data models.
-
-### `/styles`
-Global styles and Tailwind configuration.
-
----
 
 ## 🔐 Environment Variables
 
