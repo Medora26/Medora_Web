@@ -7,5 +7,10 @@ export interface UserStorageProps {
     quotaPercentage: number;
 }
 
-const DEFAULT_QUOTA_BYTES = 500 * 1024 * 1024 //500MB 
+export const DEFAULT_QUOTA_BYTES = 500 * 1024 * 1024 //500MB 
 
+export interface UserStorageAPI_RESPONSE_PROPS {
+     success: boolean;
+     newTotal: number;
+     quotaExceeded: boolean
+}
