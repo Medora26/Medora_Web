@@ -1,155 +1,178 @@
-import { collection, doc, getDoc, getDocs, increment, query, setDoc, updateDoc, where } from "firebase/firestore";
-import { db } from "../../config";
-import { DEFAULT_QUOTA_BYTES, UserStorageAPI_RESPONSE_PROPS, UserStorageProps } from "@/types/storage/type";
+// lib/firebase/service/storage-service.ts
 
+import { db } from '@/lib/firebase/config';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  increment,
+  serverTimestamp
+} from 'firebase/firestore';
+
+export interface UserStorage {
+  userId: string;
+  totalBytes: number;
+  totalFiles: number;
+  lastUpdated: Date | string;
+  quotaBytes: number; // 500MB in bytes
+  quotaPercentage: number;
+}
+
+const DEFAULT_QUOTA_BYTES = 500 * 1024 * 1024; // 500MB in bytes
 
 export class StorageService {
-
-    // initialized storage
-    static async initializeUserStorage(userId: string): Promise<void>{
-            try {
-                 const storageRef = doc(db, "user_storage", userId);
-                 const storageDoc = await getDoc(storageRef);
-
-                 if(!storageDoc.exists()) {
-                     await setDoc(storageRef, {
-                         userId,
-                         totalBytes: 0,
-                         totalFiles: 0,
-                         lastUpdated: new Date().toISOString(),
-                         quotaBytes: DEFAULT_QUOTA_BYTES,
-                         quotaPercentage: 0
-                     });
-                     console.log(`Storage initialized for users: ${userId}`)
-                 }
-            } catch (error) {
-              console.log("Error initializing user storage", error)
-            }
+  // Initialize user storage record
+  static async initializeUserStorage(userId: string): Promise<void> {
+    try {
+      console.log(`🔧 Initializing storage for user: ${userId}`);
+      const storageRef = doc(db, 'user_storage', userId);
+      const storageDoc = await getDoc(storageRef);
+      
+      if (!storageDoc.exists()) {
+        await setDoc(storageRef, {
+          userId,
+          totalBytes: 0,
+          totalFiles: 0,
+          lastUpdated: new Date().toISOString(),
+          quotaBytes: DEFAULT_QUOTA_BYTES,
+          quotaPercentage: 0
+        });
+        console.log(`✅ Storage initialized for user: ${userId}`);
+      } else {
+        console.log(`📦 Storage already exists for user: ${userId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error initializing user storage:', error);
     }
+  }
 
+  // Update storage usage when file is added
+  static async addFileStorage(
+    userId: string, 
+    fileBytes: number
+  ): Promise<{ success: boolean; newTotal: number; quotaExceeded: boolean }> {
+    try {
+      console.log(`📤 Adding file to storage - User: ${userId}, Size: ${fileBytes} bytes`);
+      
+      const storageRef = doc(db, 'user_storage', userId);
+      let storageDoc = await getDoc(storageRef);
+      
+      // If storage doc doesn't exist, initialize it first
+      if (!storageDoc.exists()) {
+        console.log('⚠️ Storage document not found, initializing...');
+        await this.initializeUserStorage(userId);
+        storageDoc = await getDoc(storageRef);
+      }
 
-  //update Storage when files added 
-   static async addFileStorage(
-       userId: string,
-       fileBytes: number
-   ): Promise<UserStorageAPI_RESPONSE_PROPS> {
-        try {
-          const storageRef = doc(db, "user_storage", userId);
-          const storageDoc = await getDoc(storageRef);
+      const currentData = storageDoc.data();
+      if (!currentData) {
+        throw new Error('Failed to get storage data');
+      }
 
-          if(!storageDoc.exists()) {
-             await this.initializeUserStorage(userId)
-          }
+      const currentTotal = currentData.totalBytes || 0;
+      const newTotal = currentTotal + fileBytes;
+      const quotaBytes = currentData.quotaBytes || DEFAULT_QUOTA_BYTES;
+      const quotaExceeded = newTotal > quotaBytes;
 
-          const currentData = storageDoc.exists() ? storageDoc.data() : {totalBytes: 0, quotaBytes: DEFAULT_QUOTA_BYTES};
-          const newTotal = (currentData.totalBytes || 0) + fileBytes
-          const quotaExceeded = newTotal > (currentData.quotaBytes || DEFAULT_QUOTA_BYTES) * 100;
+      console.log(`📊 Storage calculation:`, {
+        currentTotal,
+        fileBytes,
+        newTotal,
+        quotaBytes,
+        quotaExceeded
+      });
 
-          if(quotaExceeded) {
-             return {success: false, newTotal, quotaExceeded: true}
-          }
+      if (quotaExceeded) {
+        console.warn(`⚠️ Quota exceeded! ${newTotal} > ${quotaBytes}`);
+        return { success: false, newTotal, quotaExceeded: true };
+      }
 
-          const percentage = (newTotal/ (currentData.quotaBytes || DEFAULT_QUOTA_BYTES)) * 100
+      const percentage = (newTotal / quotaBytes) * 100;
 
-          await updateDoc(storageRef, {
-             totalBytes: increment(fileBytes),
-             totalFiles: increment(1),
-             lastUpdated: new Date().toISOString(),
-             quotaPercentage: percentage
-          });
-          console.log(`Added ${fileBytes} bytes to users ${userId} storage`)
-          return {
-            success: true,
-            newTotal,
-            quotaExceeded: false
-          }
-        } catch (error) {
-          console.error("Error updating user storage:", error)
-          return {
-             success: false,
-             newTotal: 0,
-             quotaExceeded: false
-          }
-        }
-   }
+      // Update the document
+      await updateDoc(storageRef, {
+        totalBytes: increment(fileBytes),
+        totalFiles: increment(1),
+        lastUpdated: new Date().toISOString(),
+        quotaPercentage: percentage
+      });
 
-   // Remove file from storage when deleted 
+      console.log(`✅ Storage updated successfully! New total: ${newTotal} bytes (${percentage.toFixed(2)}%)`);
+      
+      return { success: true, newTotal, quotaExceeded: false };
+    } catch (error) {
+      console.error('❌ Error updating storage:', error);
+      return { success: false, newTotal: 0, quotaExceeded: false };
+    }
+  }
 
+  // Remove file from storage when deleted
   static async removeFileStorage(
     userId: string, 
     fileBytes: number
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
+      console.log(`🗑️ Removing file from storage - User: ${userId}, Size: ${fileBytes} bytes`);
+      
+      const storageRef = doc(db, 'user_storage', userId);
+      const storageDoc = await getDoc(storageRef);
+      
+      if (!storageDoc.exists()) {
+        console.warn('⚠️ Storage document not found, cannot remove file');
+        return false;
+      }
+
+      const currentData = storageDoc.data();
+      const currentTotal = currentData.totalBytes || 0;
+      const newTotal = Math.max(0, currentTotal - fileBytes);
+      const quotaBytes = currentData.quotaBytes || DEFAULT_QUOTA_BYTES;
+      const percentage = (newTotal / quotaBytes) * 100;
+
+      await updateDoc(storageRef, {
+        totalBytes: increment(-fileBytes),
+        totalFiles: increment(-1),
+        lastUpdated: new Date().toISOString(),
+        quotaPercentage: percentage
+      });
+
+      console.log(`✅ Storage updated after removal! New total: ${newTotal} bytes`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error removing storage:', error);
+      return false;
+    }
+  }
+
+  // Get user storage info
+  static async getUserStorage(userId: string): Promise<UserStorage | null> {
+    try {
+      console.log(`📖 Getting storage for user: ${userId}`);
+      
       const storageRef = doc(db, 'user_storage', userId);
       const storageDoc = await getDoc(storageRef);
       
       if (storageDoc.exists()) {
-        const currentTotal = storageDoc.data().totalBytes || 0;
-        const newTotal = Math.max(0, currentTotal - fileBytes);
-        const quotaBytes = storageDoc.data().quotaBytes || DEFAULT_QUOTA_BYTES;
-        const percentage = (newTotal / quotaBytes) * 100;
-
-        await updateDoc(storageRef, {
-          totalBytes: increment(-fileBytes),
-          totalFiles: increment(-1),
-          lastUpdated: new Date().toISOString(),
-          quotaPercentage: percentage
-        });
-
-        console.log(`✅ Removed ${fileBytes} bytes from user ${userId} storage`);
-      }
-    } catch (error) {
-      console.error('Error removing storage:', error);
-    }
-  }
-
-  static async getUserStorage(userId: string): Promise<UserStorageProps | null> {
-    try {
-      const storageRef = doc(db, 'user_storage', userId);
-      const storageDoc = await getDoc(storageRef);
-
-      if(storageDoc.exists()) {
-         const data = storageDoc.data()
-         return {
-             userId: data.userId,
-             totalBytes: data.totalBytes,
-             totalFiles: data.totalFiles,
-             lastUpdated: new Date(data.lastUpdated),
-             quotaBytes: data.quotaBytes,
-             quotaPercentage: data.quotaPercentage
-         }
+        const data = storageDoc.data();
+        console.log(`📦 Storage data found:`, data);
+        
+        return {
+          userId: data.userId,
+          totalBytes: data.totalBytes || 0,
+          totalFiles: data.totalFiles || 0,
+          lastUpdated: data.lastUpdated,
+          quotaBytes: data.quotaBytes || DEFAULT_QUOTA_BYTES,
+          quotaPercentage: data.quotaPercentage || 0
+        };
       } else {
-         await this.initializeUserStorage(userId)
-         return await this.getUserStorage(userId)
+        console.log(`⚠️ No storage document found for user: ${userId}`);
+        // Initialize if doesn't exist
+        await this.initializeUserStorage(userId);
+        return await this.getUserStorage(userId);
       }
     } catch (error) {
-      console.error("Error getting user storage",error)
-      return null
-    }
-  }
-
-  // Calculate total storage from all user documents (for admin)
-  static async calculateUserStorageFromDocuments(userId: string): Promise<number> {
-    try {
-      const documentsCollection = collection(db, 'documents');
-      const q = query(
-        documentsCollection,
-        where('userId', '==', userId),
-        where('isTrashed', '==', false)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      let totalBytes = 0;
-      
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        totalBytes += data.cloudinary?.bytes || 0;
-      });
-      
-      return totalBytes;
-    } catch (error) {
-      console.error('Error calculating storage:', error);
-      return 0;
+      console.error('❌ Error getting user storage:', error);
+      return null;
     }
   }
 
@@ -159,14 +182,10 @@ export class StorageService {
     
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
-
-
 }
-
-

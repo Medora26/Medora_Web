@@ -32,12 +32,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth/authContext";
 import { useTheme } from "next-themes";
+import { StorageService } from "@/lib/firebase/service/storage-tracking/service";
 
 const TopNavbar = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-const { theme, setTheme } = useTheme();
-const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const {user} = useAuth()
+
+
 
 useEffect(() => {
   setMounted(true);
@@ -64,7 +68,7 @@ const toggleTheme = () => {
     }
   };
 
-  const {user} = useAuth()
+ 
 
   return (
     <header className="sticky top-0 z-30 flex h-18 justify-between items-center gap-4 border-b bg-background px-4 md:px-6">

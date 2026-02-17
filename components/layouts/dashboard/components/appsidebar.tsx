@@ -38,6 +38,8 @@ import { useAuth } from '@/context/auth/authContext';
 import { signOutUser } from '@/lib/firebase/service/auth';
 import FileUploadDialog from '../components/dialog/file-upload-dialog';
 import { PatientService } from '@/lib/firebase/service/patients/service'; // Import PatientService
+import { StorageService } from '@/lib/firebase/service/storage-tracking/service';
+import { cn } from '@/lib/utils';
 
 // Define types for navigation items
 interface NavItem {
@@ -61,6 +63,37 @@ const AppSidebar = () => {
   const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(undefined);
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const {user: currentUserData} = useAuth();
+  const [storageInfo, setStorageInfo] = useState<{
+     used: string;
+     total: string;
+     percentage: number;
+  } | null>(null)
+  const [loadingStorage, setLoadingStorage] = useState(false)
+ // fetch storage info 
+ 
+ useEffect(() => {
+    const fetchStorageInfo = async () => {
+       if(!currentUserData?.uid) return;
+       setLoadingStorage(false)
+
+       try {
+         const storage = await StorageService.getUserStorage(currentUserData.uid);
+         if(storage) {
+           setStorageInfo({
+             used: StorageService.formatBytes(storage.totalBytes),
+             total: StorageService.formatBytes(storage.quotaBytes),
+             percentage: storage.quotaPercentage
+           })
+         }
+       } catch (error) {
+          console.log(`Error fetch the storage info ${error}`)
+       }finally {
+        setLoadingStorage(false)
+       }
+
+    }
+     fetchStorageInfo()
+ }, [currentUserData?.uid])
 
   // Get current patient ID from URL or context
   useEffect(() => {
@@ -281,15 +314,30 @@ const AppSidebar = () => {
         {/* Storage Info */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className="px-3 py-2">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Storage</span>
-                <span className="font-medium whitespace-nowrap">45.2 GB / 100 GB</span>
-              </div>
-              <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full w-[45%] bg-blue-500 rounded-full" />
-              </div>
-            </div>
+             <div className="px-2 py-2">
+    <div className="flex items-center justify-between text-xs mb-1">
+      <span className="text-muted-foreground">Storage</span>
+      {storageInfo && (
+        <span className="font-medium">
+          {storageInfo.used} / {storageInfo.total}
+        </span>
+      )}
+    </div>
+    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+      <div 
+        className={cn(
+          "h-full rounded-full transition-all",
+          (storageInfo?.percentage || 0) > 90 ? "bg-red-500" : 
+          (storageInfo?.percentage || 0) > 70 ? "bg-yellow-500" : "bg-blue-500"
+        )}
+        style={{ width: `${Math.min(storageInfo?.percentage || 0, 100)}%` }}
+      />
+    </div>
+    <p className="text-[10px] text-muted-foreground mt-1">
+      {storageInfo?.percentage.toFixed(1)}% of 500MB used
+    </p>
+  </div>
+  
           </SidebarGroupContent>
         </SidebarGroup>
 
