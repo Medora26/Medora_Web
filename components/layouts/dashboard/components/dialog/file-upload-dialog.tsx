@@ -16,7 +16,7 @@ import { uploadToCloudinary, validateFile, extractFileInfo } from '@/lib/cloudin
 import { saveDocumentMetadata } from '@/lib/firebase/service/uploadFile/service';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
-
+import {StorageService} from "@/lib/firebase/service/storage-tracking/service"
 interface FileDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -77,7 +77,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId, onSuccess }: FileDialogP
   const [fileSizeError, setFileSizeError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStage, setUploadStage] = useState<'cloudinary' | 'firestore' | null>(null);
+  const [uploadStage, setUploadStage] = useState<'cloudinary' | 'firestore' | 'checking' | null>(null);
   const [starAfterUpload, setStarAfterUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -195,7 +195,7 @@ const FileUploadDialog = ({ isOpen, onClose, patientId, onSuccess }: FileDialogP
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+/* const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   
   if (!selectedFile || !currentUserData) {
@@ -222,10 +222,27 @@ const handleSubmit = async (e: React.FormEvent) => {
   });
 
   try {
-    // Step 1: Upload to Cloudinary with enhanced options
-    setUploadStage('cloudinary');
-    toast.info('Uploading to Cloudinary...');
-    
+    // NEW: Check first user storage quota
+    setUploadStage('checking');
+    toast.info('Checking storage quota')
+     
+    const userStorage = await StorageService.getUserStorage(currentUserData.uid)
+    const newTotalBytes = (userStorage?.totalBytes || 0) + selectedFile.size
+    const quotaBytes = userStorage?.quotaBytes || 500 * 1024 * 1024
+
+    if(newTotalBytes > quotaBytes) {
+        const used = StorageService.formatBytes(userStorage?.totalBytes || 0);
+        const quota = StorageService.formatBytes(quotaBytes);
+        const fileSize = StorageService.formatBytes(selectedFile.size)
+        toast.error(`Storage quota exceed! You have used ${used} of ${quota}. Cannnot upload ${fileSize}`)
+        setIsUploading(false)
+        return;
+    }
+
+
+    //Step 1: upload to cloudinary
+    setUploadStage('cloudinary')
+    toast.info("Uploading to cloudinary....")
     const cloudinaryResponse = await uploadToCloudinary(
       selectedFile,
       currentUserData.uid,
@@ -331,8 +348,166 @@ const handleSubmit = async (e: React.FormEvent) => {
     setUploadProgress(0);
     setUploadStage(null);
   }
-};
+}; */
+// In file-upload-dialog.tsx, update the handleSubmit function
 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!selectedFile || !currentUserData) {
+    toast.error('Please select a file and ensure you are logged in');
+    return;
+  }
+
+  // Check file size limit
+  if (selectedFile.size > MAX_FILE_SIZE) {
+    const sizeInMB = (selectedFile.size / (1024 * 1024)).toFixed(2);
+    toast.error(`File size exceeds 1MB limit. Current size: ${sizeInMB}MB`);
+    return;
+  }
+
+  setIsUploading(true);
+  setUploadProgress(0);
+  setUploadStage('cloudinary');
+
+  try {
+    // Check user storage quota first
+    setUploadStage('checking');
+    toast.info('Checking storage quota...');
+    
+    console.log('🔍 Checking storage for user:', currentUserData.uid);
+    
+    // Get or initialize user storage
+    let userStorage = await StorageService.getUserStorage(currentUserData.uid);
+    console.log('🔍 Current user storage:', userStorage);
+    
+    if (!userStorage) {
+      // Initialize if null
+      await StorageService.initializeUserStorage(currentUserData.uid);
+      userStorage = await StorageService.getUserStorage(currentUserData.uid);
+    }
+    
+    const newTotalBytes = (userStorage?.totalBytes || 0) + selectedFile.size;
+    const quotaBytes = userStorage?.quotaBytes || 500 * 1024 * 1024;
+    
+    console.log('🔍 Storage check:', {
+      currentUsed: userStorage?.totalBytes,
+      fileSize: selectedFile.size,
+      newTotal: newTotalBytes,
+      quota: quotaBytes,
+      wouldExceed: newTotalBytes > quotaBytes
+    });
+    
+    if (newTotalBytes > quotaBytes) {
+      const used = StorageService.formatBytes(userStorage?.totalBytes || 0);
+      const quota = StorageService.formatBytes(quotaBytes);
+      const fileSize = StorageService.formatBytes(selectedFile.size);
+      
+      toast.error(`Storage quota exceeded! You have used ${used} of ${quota}. Cannot upload ${fileSize}.`);
+      setIsUploading(false);
+      return;
+    }
+
+    // Step 1: Upload to Cloudinary
+    setUploadStage('cloudinary');
+    toast.info('Uploading to Cloudinary...');
+    
+    const cloudinaryResponse = await uploadToCloudinary(
+      selectedFile,
+      currentUserData.uid,
+      {
+        onProgress: (progress) => {
+          setUploadProgress(progress);
+        },
+        generateThumbnail: true,
+        patientId: patientId,
+        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      }
+    );
+
+    if (!cloudinaryResponse) {
+      throw new Error('Failed to upload to Cloudinary');
+    }
+
+    // Step 2: Extract file info
+    const fileInfo = extractFileInfo(cloudinaryResponse);
+    const fileTypeCategory = getFileTypeCategory(selectedFile);
+
+    // Step 3: Prepare metadata for Firestore
+    setUploadStage('firestore');
+    setUploadProgress(0);
+    toast.info('Saving document metadata...');
+
+    const documentData = {
+      userId: currentUserData.uid,
+      userEmail: currentUserData.email || undefined,
+      patientId: patientId || null,
+      documentName,
+      documentDate: documentDate ? format(documentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      category,
+      categoryLabel: DOCUMENT_CATEGORIES.find(c => c.value === category)?.label || category,
+      description: description || '',
+      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      fileInfo: {
+        name: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+        fileTypeCategory,
+      },
+      cloudinary: fileInfo,
+      isStarred: starAfterUpload,
+    };
+
+    // Save to Firestore
+    console.log('🔍 Saving document to Firestore...');
+    const docId = await saveDocumentMetadata(documentData);
+    console.log('🔍 Document saved with ID:', docId);
+
+    // Step 4: Update user storage
+    console.log('🔍 Updating user storage...');
+    const storageResult = await StorageService.addFileStorage(currentUserData.uid, selectedFile.size);
+    console.log('🔍 Storage update result:', storageResult);
+
+    // Verify storage was updated
+    const updatedStorage = await StorageService.getUserStorage(currentUserData.uid);
+    console.log('🔍 Updated storage:', updatedStorage);
+
+    if (storageResult.success) {
+      console.log('✅ Storage updated successfully!');
+    } else if (storageResult.quotaExceeded) {
+      console.warn('⚠️ Storage quota exceeded after upload? This should not happen!');
+    }
+
+    // Success message
+    if (starAfterUpload) {
+      toast.success('Document uploaded and starred successfully!');
+    } else {
+      toast.success('Document uploaded successfully!');
+    }
+
+    if (onSuccess) {
+      onSuccess(docId);
+    }
+    
+    // Reset form and close
+    handleRemoveFile();
+    setDocumentName('');
+    setDocumentDate(undefined);
+    setCategory('');
+    setDescription('');
+    setTags('');
+    setStarAfterUpload(false);
+    onClose();
+
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+    toast.error('Failed to upload document. Please try again.');
+  } finally {
+    setIsUploading(false);
+    setUploadProgress(0);
+    setUploadStage(null);
+  }
+};
   // Get icon based on file type
   const getFileIcon = (file: File) => {
     const fileType = getFileTypeCategory(file);
