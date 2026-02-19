@@ -1,8 +1,14 @@
+import ContactForm from '@/components/layouts/contact/component/contact-form'
+import ContactLayout from '@/components/layouts/contact/contact-layout'
+import { Label } from '@/components/ui/label'
+import { Contact } from 'lucide-react'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <ContactLayout>
+      <ContactForm/>
+    </ContactLayout>
   )
 }
 
