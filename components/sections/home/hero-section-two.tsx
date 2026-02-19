@@ -9,6 +9,7 @@ import React from 'react'
 import Marquee from "react-fast-marquee"
 const HeroSectionTwo = () => {
     const {theme} = useTheme()
+    console.log("Hello world")
   return (
    <div className="flex flex-col items-center justify-center text-center px-4 bg-[url('/images/light-hero-gradient.png')] dark:bg-[url('/images/dark-hero-gradient.png')] bg-no-repeat bg-cover">
     <Navbar/>
