@@ -26,33 +26,11 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ContactFormDataProps, ContactFormErrorProps, ContactFormProps } from '@/types/contact/types';
+import { saveCollaborator } from '@/lib/firebase/service/contact/service';
 
-interface FormData {
-  fullName: string;
-  email: string;
-  role: 'developer' | 'content-creator' | 'digital-marketer' | 'designer' | '';
-  location: string;
-  experience: string;
-  portfolio: string;
-  message: string;
-  acceptedTerms: boolean;
-}
 
-interface FormErrors {
-  fullName?: string;
-  email?: string;
-  role?: string;
-  location?: string;
-  experience?: string;
-  portfolio?: string;
-  message?: string;
-  acceptedTerms?: string;
-}
 
-interface ContactFormProps {
-  onLocationSubmit?: (location: string) => Promise<{ lat: number; lng: number; name: string } | null>;
-  isGlobeAnimating?: boolean;
-}
 
 const roleIcons = {
   'developer': '💻',
@@ -69,7 +47,7 @@ const roleDescriptions = {
 };
 
 export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ContactFormDataProps>({
     fullName: '',
     email: '',
     role: '',
@@ -80,7 +58,7 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
     acceptedTerms: false,
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<ContactFormErrorProps>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -92,7 +70,7 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
   useEffect(() => {
     const requiredFields = ['fullName', 'email', 'role', 'location', 'experience', 'message', 'acceptedTerms'];
     const filledFields = requiredFields.filter(field => {
-      const value = formData[field as keyof FormData];
+      const value = formData[field as keyof ContactFormDataProps];
       return value && (typeof value !== 'boolean' ? String(value).length > 0 : value === true);
     });
     setFormProgress((filledFields.length / requiredFields.length) * 100);
@@ -107,13 +85,13 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
     setFormData(prev => ({ ...prev, [name]: newValue }));
     
     // Clear error for this field when user types
-    if (errors[name as keyof FormErrors]) {
+    if (errors[name as keyof ContactFormErrorProps]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleRoleChange = (value: string) => {
-    setFormData(prev => ({ ...prev, role: value as FormData['role'] }));
+    setFormData(prev => ({ ...prev, role: value as ContactFormDataProps['role'] }));
     if (errors.role) {
       setErrors(prev => ({ ...prev, role: undefined }));
     }
@@ -125,7 +103,7 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
   };
 
   const validateField = (fieldName: string): string | undefined => {
-    const value = formData[fieldName as keyof FormData];
+    const value = formData[fieldName as keyof ContactFormDataProps];
     
     switch (fieldName) {
       case 'fullName':
@@ -178,11 +156,11 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
   };
 
   const validateForm = (): boolean => {
-    const fieldsToValidate: (keyof FormData)[] = [
+    const fieldsToValidate: (keyof ContactFormDataProps)[] = [
       'fullName', 'email', 'role', 'location', 'experience', 'message', 'acceptedTerms'
     ];
     
-    const newErrors: FormErrors = {};
+    const newErrors: ContactFormErrorProps = {};
     let isValid = true;
 
     fieldsToValidate.forEach(field => {
@@ -234,32 +212,33 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
   };
 
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Mark all fields as touched
-    const allFields: (keyof FormData)[] = [
-      'fullName', 'email', 'role', 'location', 'experience', 'message', 'acceptedTerms'
-    ];
-    const touchedFields = allFields.reduce((acc, field) => ({ ...acc, [field]: true }), {});
-    setTouched(touchedFields);
-    
-    if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
-      return;
-    }
+  e.preventDefault();
+  
+  // Mark all fields as touched
+  const allFields: (keyof ContactFormDataProps)[] = [
+    'fullName', 'email', 'role', 'location', 'experience', 'message', 'acceptedTerms'
+  ];
+  const touchedFields = allFields.reduce((acc, field) => ({ ...acc, [field]: true }), {});
+  setTouched(touchedFields);
+  
+  if (!validateForm()) {
+    toast.error('Please fix the errors in the form');
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+  try {
+    // Save to Firebase
+const result = await saveCollaborator(formData);
+    
+    if (result.success) {
       toast.success('Application submitted! 🚀', {
         description: "Thanks for joining Medora. We'll review your application soon.",
         duration: 5000,
       });
       
-      console.log('Form submitted:', formData);
+      console.log('Form submitted with ID:', result.id);
       
       // Reset form
       setFormData({
@@ -274,17 +253,21 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
       });
       setLocationSuccess('');
       setTouched({});
-      
-    } catch (error) {
-      toast.error('Something went wrong', {
-        description: 'Please try again later.',
+    } else {
+      toast.error('Submission failed', {
+        description: result.error || 'Something went wrong',
       });
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  } catch (error) {
+    toast.error('Something went wrong', {
+      description: 'Please try again later.',
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-  const getFieldError = (fieldName: keyof FormData): string | undefined => {
+  const getFieldError = (fieldName: keyof ContactFormDataProps): string | undefined => {
     return touched[fieldName] ? errors[fieldName] : undefined;
   };
 
@@ -293,17 +276,14 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-3xl md:text-3xl text-center md:text-left font-bold">
+            <CardTitle className="text-3xl md:text-4xl text-center md:text-left font-bold">
               Got Ideas? We'v got the skills. Let's Team up
             </CardTitle>
             <CardDescription className="mt-2">
               Take the first step towards building the future with us
             </CardDescription>
           </div>
-          <Badge variant="outline" className="px-3 py-1 hidden md:block">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Remote First
-          </Badge>
+          
         </div>
         
         {/* Progress bar */}
@@ -418,7 +398,7 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
                 className="transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isLocationLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4  " />
                 ) : (
                   <Globe2 className="h-4 w-4" />
                 )}
@@ -439,7 +419,7 @@ export function ContactForm({ onLocationSubmit, isGlobeAnimating }: ContactFormP
               </div>
             )}
             {isGlobeAnimating && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mt-2 animate-pulse">
+              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mt-2">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Globe is flying to your location...
               </div>
