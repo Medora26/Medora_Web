@@ -642,3 +642,74 @@ export const getDocumentStatistics = async (userId: string) => {
     throw error;
   }
 };
+// Get recent uploads for a user
+export const getRecentUploads = async (
+  userId: string, 
+  limitCount: number = 10,
+  options?: {
+    includeTrashed?: boolean;
+  }
+) => {
+  try {
+    const documentsCollection = collection(db, 'documents');
+    let constraints: any[] = [
+      where('userId', '==', userId),
+      orderBy('uploadedAt', 'desc')
+    ];
+    
+    // Trash filter - default to false unless specified
+    if (options?.includeTrashed) {
+      constraints.push(where('isTrashed', '==', true));
+    } else {
+      constraints.push(where('isTrashed', '==', false));
+    }
+    
+    const q = query(documentsCollection, ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    // Get all documents and limit manually since we can't combine orderBy with multiple conditions easily
+    const documents = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    // Return only the most recent ones up to limitCount
+    return documents.slice(0, limitCount);
+  } catch (error) {
+    console.error('Error getting recent uploads:', error);
+    throw error;
+  }
+};
+
+// Alternative version if you want to filter by date range as well
+export const getRecentUploadsByDateRange = async (
+  userId: string,
+  days: number = 7,
+  limitCount: number = 10
+) => {
+  try {
+    const documentsCollection = collection(db, 'documents');
+    
+    // Calculate date from X days ago
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    
+    const q = query(
+      documentsCollection,
+      where('userId', '==', userId),
+      where('isTrashed', '==', false),
+      where('uploadedAt', '>=', Timestamp.fromDate(date)),
+      orderBy('uploadedAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.slice(0, limitCount).map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting recent uploads by date range:', error);
+    throw error;
+  }
+};
