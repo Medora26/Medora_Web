@@ -144,7 +144,7 @@ export default function FAQsPage() {
       </section>
 
       {/* CATEGORY TABS */}
-      <section className="sticky top-16 bg-white z-20 border-b mt-10">
+      <section className="sticky top-16 z-20 border-b mt-10">
         <div className="max-w-4xl mx-auto flex gap-6 px-6 py-4 overflow-x-auto text-sm">
           {["All", ...faqData.map((g) => g.category)].map((cat) => (
             <button
@@ -152,7 +152,7 @@ export default function FAQsPage() {
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap ${
                 activeCategory === cat
-                  ? "font-semibold text-black"
+                  ? "font-semibold "
                   : "text-gray-500"
               }`}
             >
