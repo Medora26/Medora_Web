@@ -168,7 +168,7 @@ const AppSidebar = () => {
       action: () => setFileDialogOpen(true),
       isAction: true 
     },
-    { icon: <HardDrive className="h-5 w-5" />, label: 'My Drive', href: '/drive' },
+    { icon: <HardDrive className="h-5 w-5" />, label: 'My Drive', href: '/mydrive' },
     { icon: <Clock className="h-5 w-5" />, label: 'Recent', href: '/recent' },
     { icon: <Star className="h-5 w-5" />, label: 'Starred', href: '/starred' },
   ];
