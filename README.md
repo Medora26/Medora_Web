@@ -2,7 +2,7 @@
 
 # 🩺 MEDORA  
 ### Your Digital Health Drive 💾🛡️  
-# 💌Medora Auth Pages
+# 💌Medora Auth Pages;
 <div align="center">
   <table>
     <tr>
@@ -36,7 +36,7 @@
       <td align="center">
         <img src="./public/dark.png" alt="MEDORA Dark Mode" width="400"/>
         <br />
-        <em>🌚 Dark Theme</em>
+        <em>🌚 DarK Theme</em>
       </td>
     </tr>
   </table>
