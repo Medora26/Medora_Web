@@ -192,19 +192,14 @@ const Page = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6 ">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My Drive</h1>
             <p className="text-muted-foreground">Manage and organize your medical images</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => router.push('/dashboard/upload')}>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-          </div>
+         
         </div>
 
         {/* Search and Filter Bar */}
@@ -331,11 +326,11 @@ const Page = () => {
 {!loading && viewMode === 'grid' && (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
     {filteredFiles.map((file) => (
-      <Card key={file.id} className="group overflow-hidden hover:shadow-lg transition-all">
+      <Card key={file.id} className="group overflow-hidden  hover:shadow-lg transition-all py-0 ">
         {/* Thumbnail Area */}
-        <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 relative">
+        <div className="aspect-square relative">
           {file.cloudinary?.thumbnailUrl || file.cloudinary?.url ? (
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full ">
               <Image 
                 fill
                 src={file.cloudinary.thumbnailUrl || file.cloudinary.url}
@@ -417,7 +412,7 @@ const Page = () => {
         </div>
 
         {/* File Info */}
-        <CardContent className="p-3">
+        <CardContent className="pb-4 px-5">
           <div className="space-y-1">
             <h3 className="font-medium text-sm line-clamp-1" title={file.documentName}>
               {file.documentName || 'Untitled'}
