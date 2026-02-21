@@ -18,7 +18,8 @@ import {
   LogOut,
   SparkleIcon,
   SparklesIcon,
-  WandSparklesIcon
+  WandSparklesIcon,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -245,7 +246,21 @@ const AppSidebar = () => {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-
+            <SidebarGroup>
+              <SidebarGroupLabel>Reminder</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href={"/reminder"}>
+                        <AlertCircle className='w-5 h-5' />
+                        <span className='truncate'>Appointment alert</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
          
 
           {/* Admin Section */}
@@ -253,14 +268,6 @@ const AppSidebar = () => {
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/admin/compliance" className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">Compliance</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/trash" className="flex items-center gap-2">
