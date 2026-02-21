@@ -15,7 +15,10 @@ import {
   User,
   Trash,
   Settings,
-  LogOut
+  LogOut,
+  SparkleIcon,
+  SparklesIcon,
+  WandSparklesIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -58,8 +61,8 @@ interface CategoryItem {
 
 const AppSidebar = () => {
   const router = useRouter();
-  const [isStudiesOpen, setIsStudiesOpen] = useState(true);
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
+ 
   const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(undefined);
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const {user: currentUserData} = useAuth();
@@ -243,39 +246,7 @@ const AppSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Studies by Type */}
-          <SidebarGroup>
-            <Collapsible open={isStudiesOpen} onOpenChange={setIsStudiesOpen}>
-              <SidebarGroupLabel>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FolderOpen className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">Study Types</span>
-                    </div>
-                    <ChevronRight className={`h-4 w-4 flex-shrink-0 transition-transform ${isStudiesOpen ? 'rotate-90' : ''}`} />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-              </SidebarGroupLabel>
-              
-              <CollapsibleContent>
-                <SidebarGroupContent className="ml-4 pl-2 border-l">
-                  <SidebarMenu>
-                    {category.map((item) => (
-                      <SidebarMenuItem key={item.label}>
-                        <SidebarMenuButton asChild className="h-8">
-                          <Link href={item.href} className="flex items-center gap-2">
-                            {item.icon}
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
+         
 
           {/* Admin Section */}
           <SidebarGroup>
@@ -300,7 +271,7 @@ const AppSidebar = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
+                    <Link href={`/settings/${currentUserData?.uid}`} className="flex items-center gap-2">
                       <Settings className="h-4 w-4 flex-shrink-0" />
                       <span className="truncate">Settings</span>
                     </Link>
