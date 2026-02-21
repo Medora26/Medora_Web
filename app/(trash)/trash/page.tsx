@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 // Helper function to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -92,6 +93,8 @@ const page = () => {
    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
    const [selectedItems, setSelectedItems] = useState<string[]>([])
    const [deleteDialog, setDeleteDialog] = useState(false)
+   const [selectedDoc, setSelectedDoc] = useState<any | null>(null)
+
    const router = useRouter()
   //get trash doc 
   useEffect(() => {
@@ -148,9 +151,6 @@ const page = () => {
   }
 
   const handlePermanentDelete = async (documentId: string) => {
-      if (!confirm('Are you sure you want to permanently delete this document? This action cannot be undone.')) {
-      return
-    }
 
     try {
       await permanentlyDeleteDocument(documentId)
@@ -224,6 +224,10 @@ const page = () => {
   const handleDownload = (url: string, filename: string) => {
     window.open(url, '_blank')
   }
+
+  const title = filteredData.length > 0 ? filteredData[0].documentName : null;
+
+
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6  ">
@@ -434,7 +438,7 @@ const page = () => {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleViewFile(item.id)}>
@@ -451,8 +455,11 @@ const page = () => {
                           Restore
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          className="text-destructive"
-                          onClick={() => handlePermanentDelete(item.id)}
+                          className="text-destructive font-semibold "
+                          onClick={() => {
+                            setSelectedDoc(item)
+                             setDeleteDialog(true)
+                          }}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete Permanently
@@ -562,6 +569,36 @@ const page = () => {
           </Card>
         )}
       </div>
+
+     {/*  delete dialog comp */}
+       <AlertDialog
+         open={deleteDialog}
+
+     >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Document</AlertDialogTitle>
+          <AlertDialogDescription>
+           Are you sure you want to delete this "{selectedDoc?.documentName}" permanently?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel
+           onClick={() => setDeleteDialog(false)}
+          >Cancel</AlertDialogCancel>
+          <AlertDialogAction
+           onClick={() => {
+             if(selectedDoc) {
+                 handlePermanentDelete(selectedDoc.id)
+                  setDeleteDialog(false)
+                    setSelectedDoc(null)
+             }
+           }}   
+          className="bg-red-500 text-white">Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+     </AlertDialog> 
     </DashboardLayout>
   )
 }
