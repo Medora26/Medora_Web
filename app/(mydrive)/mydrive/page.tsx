@@ -49,6 +49,7 @@ import {
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { div } from 'three/src/nodes/math/OperatorNode.js'
 
 // Helper function to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
