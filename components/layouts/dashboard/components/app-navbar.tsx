@@ -7,6 +7,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  BotMessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,12 +34,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth/authContext";
 import { useTheme } from "next-themes";
 import { StorageService } from "@/lib/firebase/service/storage-tracking/service";
+import AIChatBox from "@/components/chat-bot/AI-chatbot";
 
 const TopNavbar = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [aIchatOpen, setAIchatOpen] = useState(false)
   const {user} = useAuth()
 
 
@@ -71,8 +74,9 @@ const toggleTheme = () => {
  
 
   return (
+   <>
     <header className="sticky top-0 z-30 flex h-18 justify-between items-center gap-4 border-b bg-background px-4 md:px-6">
-      {/* <SidebarTrigger /> */}
+       <SidebarTrigger /> 
       
       {/* Search Bar - Clean and minimal */}
       <div className="flex-1 max-w-md">
@@ -89,7 +93,7 @@ const toggleTheme = () => {
       </div>
 
       {/* Right Side - Minimal */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {/* Notifications - Just an icon with badge */}
         <Button
           variant="ghost"
@@ -104,6 +108,15 @@ const toggleTheme = () => {
           >
             3
           </Badge>
+        </Button>
+
+        <Button
+         className="rounded-full"
+         size={'icon'}
+         variant={'ghost'}
+         onClick={() => setAIchatOpen(true)}
+        >
+          <BotMessageSquare className="w-4 h-4" />
         </Button>
 
         {/* User Dropdown - Just avatar */}
@@ -172,6 +185,15 @@ const toggleTheme = () => {
 </DropdownMenu>
       </div>
     </header>
+
+   {/*  AI chat bot assistant  */}
+   <AIChatBox
+    isOpen={aIchatOpen}
+    onClose={() => setAIchatOpen(false)}
+   />
+   </>
+
+    
   );
 };
 
