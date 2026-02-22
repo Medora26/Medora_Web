@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
-  console.log("Hello world")
+  
   const data = [
     {
       title: "Product",
