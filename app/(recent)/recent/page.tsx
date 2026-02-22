@@ -78,7 +78,7 @@ const formatDate = (timestamp: any) => {
 };
 
 const Page = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [files, setFiles] = useState<any[]>([]);
@@ -91,6 +91,7 @@ const Page = () => {
 
   // fetch recent
 useEffect(() => {
+  if (authLoading) return;   // wait until auth finishes
   if (!user?.uid) return;
 
   const fetchRecent = async () => {
@@ -98,6 +99,8 @@ useEffect(() => {
       setLoading(true);
 
       const docs = await getRecentUploads(user.uid, 50);
+
+      console.log("Recent docs:", docs); // DEBUG
 
       setFiles(docs);
       setFilteredFiles(docs);
@@ -110,7 +113,7 @@ useEffect(() => {
   };
 
   fetchRecent();
-}, [user?.uid]);
+}, [user?.uid, authLoading]);
   // filtering + sorting
   useEffect(() => {
     let updated = [...files];
@@ -153,7 +156,7 @@ useEffect(() => {
     router.push(`/dashboard/view/${fileId}`);
   };
 
-  const handleDownload = (url: string) => {
+  const handleDownload = (url: string, documentName: any) => {
     window.open(url, "_blank");
   };
 
@@ -182,6 +185,14 @@ useEffect(() => {
       : sortBy === "oldest"
       ? "Oldest"
       : "Name";
+
+  function setSearchTerm(arg0: string) {
+    throw new Error("Function not implemented.");
+  }
+
+  function setStarredFilter(arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <DashboardLayout>
@@ -291,9 +302,236 @@ useEffect(() => {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
+        
 
-        {/* rest of your grid + list layout stays EXACTLY SAME */}
-      </div>
+      
+       {/* Grid View - Fix */}
+      {!loading && viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredFiles.map((file) => (
+            <Card key={file.id} className="group overflow-hidden  hover:shadow-lg transition-all py-0 ">
+              {/* Thumbnail Area */}
+              <div className="aspect-square relative">
+                {file.cloudinary?.thumbnailUrl || file.cloudinary?.url ? (
+                  <div className="relative w-full h-full ">
+                    <Image 
+                      fill
+                      src={file.cloudinary.thumbnailUrl || file.cloudinary.url}
+                      alt={file.documentName}
+                      
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Study Type Badge */}
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="bg-background/90 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                    {file.categoryLabel || file.category}
+                  </span>
+                </div>
+                
+                {/* Star Indicator */}
+                {file.isStarred && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  </div>
+                )}
+      
+                {/* Action Menu */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur-sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleViewFile(file.id)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload(file.cloudinary?.url, file.documentName)}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleShare(file.id)}>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleStarToggle(file.id, file.isStarred)}>
+                        <Star className="h-4 w-4 mr-2" />
+                        {file.isStarred ? 'Remove Star' : 'Add Star'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => handleMoveToTrash(file.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Move to Trash
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+      
+              {/* File Info */}
+              <CardContent className="pb-4 px-5">
+                <div className="space-y-1">
+                  <h3 className="font-medium text-sm line-clamp-1" title={file.documentName}>
+                    {file.documentName || 'Untitled'}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{formatDate(file.uploadedAt)}</span>
+                    <span>•</span>
+                    <span>{formatBytes(file.cloudinary?.bytes || 0)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      
+      {/* List View - Fix */}
+      {!loading && viewMode === 'list' && (
+        <Card>
+          <div className="divide-y">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
+              <div className="col-span-5">Name</div>
+              <div className="col-span-2">Type</div>
+              <div className="col-span-2">Date</div>
+              <div className="col-span-2">Size</div>
+              <div className="col-span-1">Actions</div>
+            </div>
+      
+            {/* Table Rows */}
+            {filteredFiles.map((file) => (
+              <div key={file.id} className="grid grid-cols-12 gap-4 p-4 text-sm items-center hover:bg-accent/50 transition-colors group">
+                <div className="col-span-5 flex items-center gap-3">
+                  <div className="h-8 w-8 bg-muted rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {file.cloudinary?.thumbnailUrl ? (
+                      <div className="relative w-full h-full">
+                        <Image 
+                         fill
+                          src={file.cloudinary.thumbnailUrl}
+                          alt={file.documentName}
+                          
+                          className="object-cover"
+                          sizes="32px"
+                        />
+                      </div>
+                    ) : (
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{file.documentName || 'Untitled'}</p>
+                  </div>
+                  {file.isStarred && (
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <span className="px-2 py-1 bg-muted rounded-full text-xs">
+                    {file.categoryLabel || file.category}
+                  </span>
+                </div>
+                <div className="col-span-2 text-muted-foreground">{formatDate(file.uploadedAt)}</div>
+                <div className="col-span-2 text-muted-foreground">{formatBytes(file.cloudinary?.bytes || 0)}</div>
+                <div className="col-span-1">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleViewFile(file.id)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload(file.cloudinary?.url, file.documentName)}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleShare(file.id)}>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => handleMoveToTrash(file.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      
+              {/* Empty State */}
+              {!loading && filteredFiles.length === 0 && (
+                <Card className="py-12">
+                  <CardContent className="flex flex-col items-center justify-center text-center">
+                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {files.length === 0 ? 'No files yet' : 'No matching files'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                      {files.length === 0 
+                        ? 'Upload your first medical image to start organizing your studies.'
+                        : 'Try adjusting your search or filters to find what you\'re looking for.'}
+                    </p>
+                    {files.length === 0 ? (
+                      <Button onClick={() => router.push('/dashboard/upload')}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setSearchTerm('')
+                          setTypeFilter('all')
+                          setStarredFilter(false)
+                        }}
+                      >
+                        Clear Filters
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
     </DashboardLayout>
   );
 };
