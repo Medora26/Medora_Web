@@ -17,7 +17,8 @@ import {
   arrayUnion,
   arrayRemove
 } from 'firebase/firestore';
-
+import {StorageService} from "@/lib/firebase/service/storage-tracking/service"
+import { toast } from 'sonner';
 export interface ShareSettings {
   isPublic: boolean;
   shareableLink?: string;
@@ -552,7 +553,26 @@ export const restoreDocument = async (documentId: string) => {
 export const permanentlyDeleteDocument = async (documentId: string) => {
   try {
     const docRef = doc(db, 'documents', documentId);
-    await deleteDoc(docRef);
+    const docSnap = await getDoc(docRef)
+    
+    if(!docSnap.exists()) {
+        toast.error(`Document Not Found`)
+        return;
+    }
+    const data = docSnap.data();
+    const userId = data.userId || 'undefine'; 
+    const fileBytes = data.cloudinary?.bytes || 0
+
+    // second delete from firestore
+    await deleteDoc(docRef)
+
+    if(userId && fileBytes > 0) {
+         await StorageService.removeFileStorage(userId, fileBytes)
+         toast.success(`Storage updated: remove ${fileBytes} bytes for user ${userId}`)
+    }
+
+    
+     
   } catch (error) {
     console.error('Error deleting document:', error);
     throw error;
