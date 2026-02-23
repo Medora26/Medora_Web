@@ -204,12 +204,17 @@ const AppSidebar = () => {
       <Sidebar collapsible="icon" className="border-r overflow-hidden">
         <SidebarHeader className="border-b p-4">
           <div className='flex items-center gap-2'>
-            <div className="aspect-square w-10 h-10 flex items-center justify-center overflow-hidden">
-              <Image
-                alt="Medora logo"
-                src={LOGO.MEDORA_LOGO}
-                className="object-contain"
-              />
+            <div className="aspect-square w-15 h-10 flex items-center justify-center overflow-hidden">
+               <Link href="/">
+          <Image
+            src={LOGO.MEDORA_LOGO}
+            alt="Medora"
+            width={90}
+            height={10}
+            className="w-20 object-contain"
+            priority
+          />
+        </Link>
             </div>
           </div>
         </SidebarHeader>
