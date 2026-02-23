@@ -1,7 +1,7 @@
 // components/AIChatBox.tsx
 "use client";
 
-import { BotMessageSquare, X, Send, Loader2, Settings2 } from 'lucide-react';
+import { BotMessageSquare, X, Send, Loader2, Settings2, ArrowBigRight, MoveUp, ArrowUp, Plus, FileText, Shield, IdCard, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,7 @@ import { useAuth } from '@/context/auth/authContext';
 import { useState, useRef, useEffect } from 'react';
 import { ModelSelector } from '@/components/chat-bot/model-config/model-selector';
 import { DEFAULT_MODEL } from '@/lib/ai/model-config';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 interface ChatMessageProps {
   message: string;
@@ -167,8 +168,8 @@ const handleSubmit = async (e: React.FormEvent) => {
             <BotMessageSquare className="h-5 w-5 text-primary" />
             <div>
               <h2 className="font-semibold">Meditalk</h2>
-              <p className="text-xs text-muted-foreground">
-                {user ? `Helping ${user.email}` : 'Please log in'}
+              <p className="text-xs text-muted-foreground font-semibold">
+                {user ? `Helping ${user.displayName}` : 'Please log in'}
               </p>
             </div>
           </div>
@@ -241,30 +242,174 @@ const handleSubmit = async (e: React.FormEvent) => {
         </ScrollArea>
 
         {/* Input */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
-              placeholder={user ? "Ask about your medical history..." : "Please log in to chat"}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={!user || isLoading}
-              className="flex-1"
-            />
-            <Button 
-              type="submit" 
-              size="icon" 
-              disabled={!user || isLoading || !input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-          
-          {!user && (
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Please log in to use the AI assistant
-            </p>
-          )}
+       <div className="absolute bottom-0 left-0 right-0 border-t bg-background">
+  <div className="p-4">
+    <form onSubmit={handleSubmit} className="relative">
+      {/* Main Input Container - GPT Style */}
+      <div className="flex items-end gap-2 rounded-2xl border bg-muted/50 px-4 py-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+        {/* Plus Button with Dropdown */}
+        <div className="relative">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 rounded-full hover:bg-muted"
+                disabled={!user}
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Upload Document</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              
+              {/* Medical Documents */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span>Medical Records</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Prescription</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Lab Report</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>X-Ray / MRI</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Discharge Summary</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+
+              {/* Insurance Documents */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  <span>Insurance</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Insurance Card</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Policy Document</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Claim Form</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+
+              {/* Identification */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="flex items-center gap-2">
+                  <IdCard className="h-4 w-4" />
+                  <span>Identification</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Aadhaar Card</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Passport</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Driver's License</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>PAN Card</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+
+              <DropdownMenuSeparator />
+              
+              {/* Quick Upload Option */}
+              <DropdownMenuItem className="flex items-center gap-2 text-primary">
+                <Upload className="h-4 w-4" />
+                <span>Quick Upload</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+        {/* Text Input Area */}
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
+          placeholder={user ? "Ask anything" : "Please log in to chat"}
+          disabled={!user || isLoading}
+          className="flex-1 bg-transparent border-0 outline-none resize-none max-h-32 min-h-[24px] py-1 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed"
+          rows={1}
+        />
+
+        {/* Send Button */}
+        <Button 
+          type="submit" 
+          size="icon" 
+          className="h-8 w-8 rounded-full shrink-0"
+          disabled={!user || isLoading || !input.trim()}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowUp className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Helper Text */}
+      {user && (
+        <div className="mt-2 flex items-center justify-between px-2">
+          <p className="text-xs text-muted-foreground">
+            Medora AI may make mistakes. Check important info.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {selectedModel}
+          </p>
+        </div>
+      )}
+    </form>
+  </div>
+  
+  {/* Login Prompt */}
+  {!user && (
+    <div className="p-2 text-center">
+      <p className="text-xs text-muted-foreground">
+        Please log in to use the AI assistant
+      </p>
+    </div>
+  )}
+</div>
       </div>
     </>
   );
