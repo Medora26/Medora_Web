@@ -44,6 +44,7 @@ import FileUploadDialog from '../components/dialog/file-upload-dialog';
 import { PatientService } from '@/lib/firebase/service/patients/service'; // Import PatientService
 import { StorageService } from '@/lib/firebase/service/storage-tracking/service';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 // Define types for navigation items
 interface NavItem {
@@ -61,9 +62,9 @@ interface CategoryItem {
 }
 
 const AppSidebar = () => {
+  const {resolvedTheme} = useTheme()
   const router = useRouter();
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
- 
   const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(undefined);
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const {user: currentUserData} = useAuth();
@@ -202,22 +203,43 @@ const AppSidebar = () => {
   return (
     <>
       <Sidebar collapsible="icon" className="border-r overflow-hidden">
-        <SidebarHeader className="border-b p-4">
-          <div className='flex items-center gap-2'>
-            <div className="aspect-square w-15 h-10 flex items-center justify-center overflow-hidden">
-               <Link href="/">
-          <Image
-            src={LOGO.MEDORA_LOGO}
-            alt="Medora"
-            width={90}
-            height={10}
-            className="w-20 object-contain"
-            priority
-          />
-        </Link>
-            </div>
-          </div>
-        </SidebarHeader>
+       <SidebarHeader className="border-b">
+  <div className="flex items-center justify-center py-3">
+    <Link href="/" className="flex items-center justify-center">
+      
+      {/* Full logo (expanded) */}
+      <Image
+        src={
+          resolvedTheme === 'dark'
+            ? LOGO.MEDORA_FULL_DARK
+            : LOGO.MEDORA_FULL_LIGHT
+        }
+        alt="Medora"
+        className="
+          w-44 object-contain
+          group-data-[collapsible=icon]:hidden
+        "
+        priority
+      />
+
+      {/* Small logo (collapsed) */}
+      <Image
+        src={
+          resolvedTheme === 'dark'
+            ? LOGO.MEDORA_LOGO
+            : LOGO.MEDORA_LOGO
+        }
+        alt="Medora icon"
+        className="
+          hidden w-8 h-8 object-contain
+          group-data-[collapsible=icon]:block
+        "
+        priority
+      />
+
+    </Link>
+  </div>
+</SidebarHeader>
 
         <SidebarContent className="overflow-x-hidden py-2">
           {/* Main Navigation */}
