@@ -1,45 +1,19 @@
 <div align="left">
 
-# 🩺 MEDORA  
-### Your Digital Health Drive 💾🛡️  
-# 💌Medora Auth Pages;
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="./public/reg-light.png" alt="MEDORA Light Mode" width="400"/>
-        <br />
-        <em>🌞 Light Theme</em>
-      </td>
-      <td align="center">
-        <img src="./public/register.png" alt="MEDORA Dark Mode" width="400"/>
-        <br />
-        <em>🌚 Dark Theme</em>
-      </td>
-    </tr>
-  </table>
-</div>
-**Secure • Organized • User-Controlled Healthcare Data**
+ <div align='center'>
+   <img src="./public/logo/medora-full.png" alt="MEDORA Dark Mode" />
+   ```
+    <p>Secure • Organized • User-Controlled Healthcare Data</p>
+   ```
+ </div>
+
 
 ---
 
 # 🏠 Home Page Preview
 
 <div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="./public/light.png" alt="MEDORA Light Mode" width="400"/>
-        <br />
-        <em>🌞 Light Theme</em>
-      </td>
-      <td align="center">
-        <img src="./public/dark.png" alt="MEDORA Dark Mode" width="400"/>
-        <br />
-        <em>🌚 DarK Theme</em>
-      </td>
-    </tr>
-  </table>
+   <img src="./public/dark.png" alt="MEDORA Dark Mode" />
 </div>
 
 ---
