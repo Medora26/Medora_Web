@@ -9,12 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.30",
+    "@ai-sdk/openai": "^3.0.30",
+    "@ai-sdk/react": "^3.0.99",
     "@base-ui/react": "^1.1.0",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.0",
     "@types/three": "^0.183.0",
     "@uploadthing/react": "^7.3.3",
+    "ai": "^6.0.97",
     "appwrite": "^22.0.0",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.9.0",

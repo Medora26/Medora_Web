@@ -1,74 +1,41 @@
-import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+// lib/firebase/admin.ts
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Singleton instances
-let adminApp: App | null = null;
-let adminAuth: any = null;
-
-function initializeFirebaseAdmin(): App {
-  if (adminApp) {
-    return adminApp;
+function initFirebaseAdmin() {
+  if (getApps().length) {
+    return getFirestore();
   }
 
-  // Check if already initialized
-  const existingApps = getApps();
-  if (existingApps.length > 0) {
-    adminApp = existingApps[0];
-    console.log('Using existing Firebase Admin app');
-    return adminApp;
-  }
+  // Check if required environment variables exist
+  const requiredEnvVars = [
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_CLIENT_EMAIL',
+    'FIREBASE_PRIVATE_KEY'
+  ];
 
-  console.log('Initializing Firebase Admin...');
-  
-  // Get credentials from environment
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
-    console.error('Missing Firebase Admin environment variables');
-    throw new Error('Firebase Admin credentials not configured');
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      console.warn(`⚠️ Missing ${envVar} environment variable. Firebase Admin will not be initialized.`);
+      return null;
+    }
   }
 
   try {
-    adminApp = initializeApp({
+    console.log('🔥 Initializing Firebase Admin...');
+    initializeApp({
       credential: cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       }),
-      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
     });
-
-    console.log('Firebase Admin initialized successfully');
-    return adminApp;
-  } catch (error: any) {
-    console.error('Error initializing Firebase Admin:', error);
-    throw error;
-  }
-}
-
-// Export a function to get auth instance
-export async function getAdminAuth() {
-  if (!adminApp) {
-    initializeFirebaseAdmin();
-  }
-  if (!adminAuth) {
-    adminAuth = getAuth(adminApp!);
-  }
-  return adminAuth;
-}
-
-// Helper to verify Firebase token
-export async function verifyFirebaseToken(token: string) {
-  try {
-    const auth = await getAdminAuth();
-    const decodedToken = await auth.verifyIdToken(token);
-    return decodedToken;
+    console.log('✅ Firebase Admin initialized successfully');
+    return getFirestore();
   } catch (error) {
-    console.error('Token verification error:', error);
+    console.error('❌ Failed to initialize Firebase Admin:', error);
     return null;
   }
 }
 
-// Export for direct use if needed
-export { adminApp };
+export const adminDb = initFirebaseAdmin();
