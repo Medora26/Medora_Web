@@ -61,18 +61,19 @@ export default function Page() {
     loadReminders();
   }, [user]);
 
-  const getUrgencyStyle = (appointmentDate: Date) => {
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
+const getUrgencyStyle = (appointmentDate: Date) => {
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
 
-    if (appointmentDate.toDateString() === today.toDateString())
-      return "border-red-500 bg-red-50";
-    if (appointmentDate.toDateString() === tomorrow.toDateString())
-      return "border-yellow-500 bg-yellow-50";
+  if (appointmentDate.toDateString() === today.toDateString())
+    return "border-red-500 bg-red-50 dark:bg-red-500/10 dark:border-red-400";
 
-    return "border-border";
-  };
+  if (appointmentDate.toDateString() === tomorrow.toDateString())
+    return "border-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 dark:border-yellow-400";
+
+  return "border-border";
+};
 
   const handleSave = async () => {
     if (!user || !title || !date || !time) return;
