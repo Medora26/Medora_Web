@@ -71,16 +71,19 @@ Your efforts, time, and creativity help push this project forward—thank you! �
 </table>
 
 ---
-
-## 💡 How to Get Featured Here
+## 🚀 How to Get Featured Here
 
 Want to see your face on this wall?  
-Here’s how you can make it happen:
+Here’s how you can earn a spot among the top contributors:
 
-- Contribute meaningful code or documentation
-- Help with bug fixes or feature improvements
-- Actively participate in discussions and reviews
-- Maintain high-quality commits and consistency
+- Contribute **meaningful and impactful code or documentation**
+- Fix critical bugs or implement valuable new features
+- Actively participate in **discussions, code reviews, and issue tracking**
+- Maintain **high-quality, well-structured, and consistent commits**
+- Reach a cumulative contribution of **3000+ lines of code** in this repository
+- Show long-term commitment and collaboration with the project
+
+Quality matters more than quantity—but sustained effort gets noticed. 💪  
 
 ---
 
