@@ -137,64 +137,92 @@ const page = () => {
     setFilteredData(filtered)
   }, [searchTerm, typeFilter, trashData])
 
-  //handle restore 
-  const handleRestore = async (documentId: string) => {
-     try {
-       await restoreDocument(documentId)
-       setTrashData(prev => prev.filter(item => item.id !== documentId))
-       setSelectedItems(prev => prev.filter(id => id !== documentId))
-       toast.success(`Document Restore Successfully!`)
-     } catch (error) {
-        console.error(`Document not restored successfully`)
-        toast.error(`Document not restored successfully!`)
-     }
+//handle restore 
+const handleRestore = async (documentId: string) => {
+  try {
+    await restoreDocument(documentId)
+    setTrashData(prev => prev.filter(item => item.id !== documentId))
+    setSelectedItems(prev => prev.filter(id => id !== documentId))
+    toast.success(`Document Restore Successfully!`)
+  } catch (error) {
+    console.error(`Document not restored successfully`)
+    toast.error(`Document not restored successfully!`)
+  }
+}
+
+const handlePermanentDelete = async (documentId: string) => {
+  try {
+    await permanentlyDeleteDocument(documentId)
+    setTrashData(prev => prev.filter(item => item.id !== documentId))
+    setSelectedItems(prev => prev.filter(id => id !== documentId))
+    toast.success('Document Deleted Permanently')
+  } catch (error) {
+    console.log("Failed to delete permanently", error)
+    toast.error("Failed to delete permanently")
+  }
+}
+
+// Handle bulk restore
+const handleBulkRestore = async () => {
+  if (selectedItems.length === 0) return
+
+  try {
+    await Promise.all(selectedItems.map(id => restoreDocument(id)))
+    setTrashData(prev => prev.filter(item => !selectedItems.includes(item.id)))
+    setSelectedItems([])
+    toast.success(`${selectedItems.length} documents restored`)
+  } catch (error) {
+    console.error('Error bulk restoring:', error)
+    toast.error('Failed to restore some documents')
+  }
+}
+
+// Handle bulk delete (selected items)
+const handleBulkDelete = async () => {
+  if (selectedItems.length === 0) return
+
+  if (!confirm(`Are you sure you want to permanently delete ${selectedItems.length} documents? This action cannot be undone.`)) {
+    return
   }
 
-  const handlePermanentDelete = async (documentId: string) => {
-
-    try {
-      await permanentlyDeleteDocument(documentId)
-      setTrashData(prev => prev.filter(item => item.id !== documentId))
-      setSelectedItems(prev => prev.filter(id => id !== documentId))
-      toast.success('Document Delete Permanently')
-    } catch (error) {
-      console.log("Failed to delete permanently", error)
-      toast.error("failed to delete permanently")
-    }
+  try {
+    await Promise.all(selectedItems.map(id => permanentlyDeleteDocument(id)))
+    setTrashData(prev => prev.filter(item => !selectedItems.includes(item.id)))
+    setSelectedItems([])
+    toast.success(`${selectedItems.length} documents permanently deleted`)
+  } catch (error) {
+    console.error('Error bulk deleting:', error)
+    toast.error('Failed to delete some documents')
   }
-   // Handle bulk restore
-  const handleBulkRestore = async () => {
-    if (selectedItems.length === 0) return
-    
-    try {
-      await Promise.all(selectedItems.map(id => restoreDocument(id)))
-      setTrashData(prev => prev.filter(item => !selectedItems.includes(item.id)))
-      setSelectedItems([])
-      toast.success(`${selectedItems.length} documents restored`)
-    } catch (error) {
-      console.error('Error bulk restoring:', error)
-      toast.error('Failed to restore some documents')
-    }
-  }
-  // Handle bulk delete
-  const handleBulkDelete = async () => {
-    if (selectedItems.length === 0) return
-    
-    if (!confirm(`Are you sure you want to permanently delete ${selectedItems.length} documents? This action cannot be undone.`)) {
-      return
-    }
+}
 
-    try {
-      await Promise.all(selectedItems.map(id => permanentlyDeleteDocument(id)))
-      setTrashData(prev => prev.filter(item => !selectedItems.includes(item.id)))
-      setSelectedItems([])
-      toast.success(`${selectedItems.length} documents permanently deleted`)
-    } catch (error) {
-      console.error('Error bulk deleting:', error)
-      toast.error('Failed to delete some documents')
-    }
+// Handle delete ALL trash
+const handleDeleteAll = async () => {
+  if (trashData.length === 0) return
+
+  if (!confirm(`Delete ALL ${trashData.length} files permanently? This cannot be undone.`)) {
+    return
   }
 
+  try {
+    setLoading(true)
+
+    await Promise.all(
+      trashData.map(item => permanentlyDeleteDocument(item.id))
+    )
+
+    setTrashData([])
+    setFilteredData([])
+    setSelectedItems([])
+
+    toast.success("All trash files permanently deleted")
+  } catch (error) {
+    console.error("Error deleting all:", error)
+    toast.error("Failed to delete all documents")
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Toggle item selection
   const toggleSelectItem = (id: string) => {
@@ -239,37 +267,50 @@ const page = () => {
               {trashData.length} {trashData.length === 1 ? 'item' : 'items'} in trash
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {selectedItems.length > 0 && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleBulkRestore}
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Restore ({selectedItems.length})
-                </Button>
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  onClick={handleBulkDelete}
-                  className='dark:bg-red-500 dark:text-white bg-red-500'
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete ({selectedItems.length})
-                </Button>
-              </>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.location.reload()}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
+<div className="flex items-center gap-2">
+  {selectedItems.length > 0 && (
+    <>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={handleBulkRestore}
+      >
+        <RotateCcw className="h-4 w-4 mr-2" />
+        Restore ({selectedItems.length})
+      </Button>
+
+      <Button 
+        size="sm"
+        onClick={handleBulkDelete}
+        className="bg-red-500 text-white dark:bg-red-500"
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        Delete ({selectedItems.length})
+      </Button>
+    </>
+  )}
+
+  {/* DELETE ALL BUTTON */}
+  {trashData.length > 0 && (
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={handleDeleteAll}
+    >
+      <Trash2 className="h-4 w-4 mr-2" />
+      Delete All
+    </Button>
+  )}
+
+  <Button 
+    variant="outline" 
+    size="sm"
+    onClick={() => window.location.reload()}
+  >
+    <RefreshCw className="h-4 w-4 mr-2" />
+    Refresh
+  </Button>
+</div>
         </div>
 
         {/* Info Banner */}
