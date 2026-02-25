@@ -296,21 +296,27 @@ export const getStarredDocuments = async (userId: string) => {
       documentsCollection,
       where('userId', '==', userId),
       where('isStarred', '==', true),
-      where('isTrashed', '==', false),
-      orderBy('starredAt', 'desc')
+      where('isTrashed', '==', false)
     );
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+
+    const docs = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+
+    return docs.sort((a: any, b: any) => {
+      if (!a.starredAt) return 1;
+      if (!b.starredAt) return -1;
+      return b.starredAt.seconds - a.starredAt.seconds;
+    });
+
   } catch (error) {
     console.error('Error getting starred documents:', error);
     throw error;
   }
 };
-
 // SHARING FUNCTIONS
 
 // Create share link for document
