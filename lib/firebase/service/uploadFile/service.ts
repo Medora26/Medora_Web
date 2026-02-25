@@ -563,8 +563,21 @@ export const permanentlyDeleteDocument = async (documentId: string) => {
     const userId = data.userId || 'undefine'; 
     const fileBytes = data.cloudinary?.bytes || 0
 
-    // second delete from firestore
-    await deleteDoc(docRef)
+const publicId = data.cloudinary?.publicId;
+
+// 1️⃣ delete from cloudinary
+if (publicId) {
+  await fetch("/api/cloudinary/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ publicId }),
+  });
+}
+
+// 2️⃣ delete firestore doc
+await deleteDoc(docRef);
 
     if(userId && fileBytes > 0) {
          await StorageService.removeFileStorage(userId, fileBytes)
