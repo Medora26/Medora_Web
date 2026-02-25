@@ -296,21 +296,27 @@ export const getStarredDocuments = async (userId: string) => {
       documentsCollection,
       where('userId', '==', userId),
       where('isStarred', '==', true),
-      where('isTrashed', '==', false),
-      orderBy('starredAt', 'desc')
+      where('isTrashed', '==', false)
     );
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+
+    const docs = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+
+    return docs.sort((a: any, b: any) => {
+      if (!a.starredAt) return 1;
+      if (!b.starredAt) return -1;
+      return b.starredAt.seconds - a.starredAt.seconds;
+    });
+
   } catch (error) {
     console.error('Error getting starred documents:', error);
     throw error;
   }
 };
-
 // SHARING FUNCTIONS
 
 // Create share link for document
@@ -563,8 +569,21 @@ export const permanentlyDeleteDocument = async (documentId: string) => {
     const userId = data.userId || 'undefine'; 
     const fileBytes = data.cloudinary?.bytes || 0
 
-    // second delete from firestore
-    await deleteDoc(docRef)
+const publicId = data.cloudinary?.publicId;
+
+// 1️⃣ delete from cloudinary
+if (publicId) {
+  await fetch("/api/cloudinary/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ publicId }),
+  });
+}
+
+// 2️⃣ delete firestore doc
+await deleteDoc(docRef);
 
     if(userId && fileBytes > 0) {
          await StorageService.removeFileStorage(userId, fileBytes)

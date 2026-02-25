@@ -17,6 +17,7 @@ import {
   deleteReminder,
   autoUpdateMissedReminders,
 } from "@/lib/firebase/service/reminder/service";
+import { Label } from "@/components/ui/label";
 
 export default function Page() {
   const { user } = useAuth();
@@ -61,18 +62,19 @@ export default function Page() {
     loadReminders();
   }, [user]);
 
-  const getUrgencyStyle = (appointmentDate: Date) => {
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
+const getUrgencyStyle = (appointmentDate: Date) => {
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
 
-    if (appointmentDate.toDateString() === today.toDateString())
-      return "border-red-500 bg-red-50";
-    if (appointmentDate.toDateString() === tomorrow.toDateString())
-      return "border-yellow-500 bg-yellow-50";
+  if (appointmentDate.toDateString() === today.toDateString())
+    return "border-red-500 bg-red-50 dark:bg-red-500/10 dark:border-red-400";
 
-    return "border-border";
-  };
+  if (appointmentDate.toDateString() === tomorrow.toDateString())
+    return "border-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 dark:border-yellow-400";
+
+  return "border-border";
+};
 
   const handleSave = async () => {
     if (!user || !title || !date || !time) return;
@@ -85,16 +87,21 @@ export default function Page() {
         appointmentDate.getTime() - reminderBefore * 60000
       );
 
-      await createReminder({
-        userId: user.uid,
-        userEmail: user.email!,
-        title,
-        doctor,
-        notes,
-        appointmentDate: Timestamp.fromDate(appointmentDate),
-        reminderBeforeMinutes: reminderBefore,
-        sendAt: Timestamp.fromDate(sendAt),
-      });
+const reminderPayload: any = {
+  userId: user.uid,
+  userEmail: user.email!,
+  title,
+  doctor,
+  appointmentDate: Timestamp.fromDate(appointmentDate),
+  reminderBeforeMinutes: reminderBefore,
+  sendAt: Timestamp.fromDate(sendAt),
+};
+
+if (notes.trim()) {
+  reminderPayload.notes = notes.trim();
+}
+
+await createReminder(reminderPayload);
 
       const updated = await getUserReminders(user.uid);
       setReminders(updated);
@@ -155,7 +162,7 @@ export default function Page() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Title</label>
+                    <label className="text-sm font-medium">Title *</label>
                     <Input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -165,7 +172,7 @@ export default function Page() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Doctor / Hospital
+                      Doctor / Hospital *
                     </label>
                     <Input
                       value={doctor}
@@ -177,7 +184,7 @@ export default function Page() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      Date
+                      Date *
                     </label>
                     <Input
                       type="date"
@@ -189,7 +196,7 @@ export default function Page() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      Time
+                      Time *
                     </label>
                     <Input
                       type="time"
@@ -200,7 +207,7 @@ export default function Page() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Reminder Before (minutes)
+                      Reminder Before (minutes) *
                     </label>
                     <Input
                       type="number"
@@ -213,7 +220,7 @@ export default function Page() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Notes</label>
+                  <Label htmlFor="description">Notes (Optional)</Label>
                   <Textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}

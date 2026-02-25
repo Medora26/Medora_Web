@@ -29,8 +29,10 @@ export async function POST() {
 
 await sendReminderEmail({
   to: data.userEmail,
+  patientName: data.userEmail.split("@")[0],
   title: data.title,
   doctor: data.doctor,
+  notes: data.notes,
   appointmentDate: data.appointmentDate.toDate(),
 });
       // mark reminder completed after email sent

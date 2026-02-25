@@ -38,3 +38,5 @@ export const companiesLogo = [
         logo: Walmart,
     }
 ];
+
+export { MEDORA_FULL_LIGHT }
