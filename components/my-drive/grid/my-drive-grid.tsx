@@ -21,6 +21,8 @@ import {
   Image as ImageIcon 
 } from 'lucide-react'
 import Image from 'next/image'
+import { useState } from 'react'
+import { ShareModal } from '@/components/share/share-modal'
 
 // Types
 interface GridViewCardProps {
@@ -46,7 +48,17 @@ export function GridViewCard({
   formatDate,
   formatBytes
 }: GridViewCardProps) {
+  const [shareDialog, setShareDialog] = useState(false);
+  const [selectedFileForShare, setSelectedFileForShare] = useState<{
+  id: string
+  name: string
+  settings?: any
+} | null>(null)
+// Update handleShare function
+
+
   return (
+   <>
     <Card key={file.id} className="group overflow-hidden hover:shadow-lg transition-all py-0">
       {/* Thumbnail Area */}
       <div className="aspect-square relative">
@@ -101,7 +113,7 @@ export function GridViewCard({
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onShare(file.id)}>
+              <DropdownMenuItem onClick={() => setShareDialog(true)} >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </DropdownMenuItem>
@@ -143,5 +155,16 @@ export function GridViewCard({
         </div>
       </CardContent>
     </Card>
+
+    <ShareModal
+     isOpen={shareDialog}
+      onClose={() => {
+      
+        setShareDialog(false)
+      setSelectedFileForShare(null)
+    }}
+   
+    />
+   </>
   )
 }
