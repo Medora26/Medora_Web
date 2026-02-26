@@ -119,9 +119,23 @@ export const uploadToCloudinary = async (
     const data = await response.json();
     
     // Generate thumbnail URL if needed
-    const thumbnailUrl = options?.generateThumbnail 
-      ? `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/w_200,h_200,c_fill/${publicId}`
-      : undefined;
+let thumbnailUrl: string | undefined;
+
+if (options?.generateThumbnail) {
+  const isImage = file.type.startsWith("image/");
+  const isPdf = file.type === "application/pdf";
+
+  if (isImage) {
+    // normal image thumbnail
+    thumbnailUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/w_200,h_200,c_fill/${publicId}`;
+  } else if (isPdf) {
+    // generate preview from first page of PDF
+    thumbnailUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/pg_1,w_200,h_200,c_fill/${publicId}.jpg`;
+  } else {
+    // for docs, xls, etc → use generic preview
+    thumbnailUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/w_200,h_200,c_fill/${publicId}.jpg`;
+  }
+}
     
     const enhancedData = {
       ...data,
