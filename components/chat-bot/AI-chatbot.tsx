@@ -23,6 +23,10 @@ import {
   generateInsuranceInfoPDF
 } from '@/components/chat-bot/pdf/index'
 import { PatientProfileData, PatientService } from '@/lib/firebase/service/patients/service';
+import {useChatHistory} from "@/hooks/use-chatHistory"
+import { Timestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
+
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
@@ -201,7 +205,7 @@ const AIChatBox = ({ isOpen, onClose }: AIChatBoxProps) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [patientProfile, setPatientProfile] = useState<PatientProfileData | null>(null)
-
+  const {saveConversation, loadTodayHistory} = useChatHistory();
   //fetch patients data
  useEffect(() => {
   if (user) {
@@ -217,6 +221,53 @@ const AIChatBox = ({ isOpen, onClose }: AIChatBoxProps) => {
     setPatientProfile(null);
   }
 }, [user]);
+
+useEffect(() => {
+  if (user) {
+    // Load today's chat history when user logs in
+    loadTodayHistory().then(historyMessages => {
+      if (historyMessages && historyMessages.length > 0) {
+        // Sort by timestamp ascending (oldest first) just to be safe
+        const sortedMessages = [...historyMessages].sort((a, b) => {
+          const timeA = a.timestamp?.getTime() || 0;
+          const timeB = b.timestamp?.getTime() || 0;
+          return timeA - timeB; // Ascending = oldest first
+        });
+        
+        // Convert Firestore messages to your message format
+        const formattedMessages = sortedMessages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content
+        }));
+        
+        setMessages(formattedMessages);
+        console.log('Loaded messages in chronological order:', formattedMessages.length);
+      } else {
+        // If no history, keep welcome message
+        console.log('No chat history found');
+      }
+    }).catch(error => {
+      console.error('Error loading chat history:', error);
+    });
+  } else {
+    // Reset to welcome message when user logs out
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: `# 👋 Welcome I'm Meditalk👾
+
+I'm here to help you with your **medical history, insurance details, and documents**. Here's what I can do for you:
+
+## 📋 Available Features
+- Answer questions about your medical records
+- Help with insurance information
+- Assist with document management
+- Generate structured medical summaries.`
+    }]);
+  }
+}, [user]);
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -334,11 +385,12 @@ I'm here to help you with your **medical history, insurance details, and documen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !user) return;
-
+    
+    const userMessageContent = input
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input
+      content: userMessageContent
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -352,7 +404,7 @@ I'm here to help you with your **medical history, insurance details, and documen
       role: 'assistant',
       content: ''
     }]);
-
+    const startTime = Date.now();
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -400,10 +452,30 @@ I'm here to help you with your **medical history, insurance details, and documen
         }
       }
 
+      // calculate processing time 
+      const processingTime = Date.now() - startTime;
+
+      //save the conversation to firebase 
+      try {
+        await saveConversation(
+           userMessageContent,
+           assistantMessage,
+           {
+             model: selectedModel,
+             processingTime,
+             tokens: Math.ceil((userMessageContent.length + assistantMessage.length) / 4)
+           }
+        );
+        console.log(`conversation saved to history`)
+      } catch (error) {
+         console.log("error saving conversation",error)
+         toast.error("error saving chat history")
+      }
+
     } catch (err) {
       console.error('Chat error:', err);
-      setError(err as Error);
-      setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
+    setError(err as Error);
+    setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
     } finally {
       setIsLoading(false);
     }
