@@ -292,20 +292,22 @@ export const toggleDocumentStarred = async (documentId: string, starred: boolean
 export const getStarredDocuments = async (userId: string) => {
   try {
     const documentsCollection = collection(db, 'documents');
+
     const q = query(
       documentsCollection,
-      where('userId', '==', userId),
-      where('isStarred', '==', true),
-      where('isTrashed', '==', false)
+      where('userId', '==', userId)
     );
-    
+
     const querySnapshot = await getDocs(q);
 
-    const docs = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const docs = querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter((doc: any) => doc.isStarred === true && doc.isTrashed !== true);
 
+    // Safe sort
     return docs.sort((a: any, b: any) => {
       if (!a.starredAt) return 1;
       if (!b.starredAt) return -1;
