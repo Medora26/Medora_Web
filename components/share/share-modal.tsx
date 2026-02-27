@@ -25,53 +25,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Copy,
   Link2,
-  Mail,
   Plus,
   X,
   Globe,
   Lock,
   Users,
-  Clock,
   Download,
   Eye,
   Check,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { db } from '@/lib/firebase/config'
+import { useAuth } from '@/context/auth/authContext'
 import { 
-  collection, 
-  query, 
-  where, 
-  getDocs,
-  updateDoc,
-  doc,
-  arrayUnion,
-  arrayRemove,
-  Timestamp 
-} from 'firebase/firestore'
+  createShareLink, 
+  updateShareSettings,
+  disableSharing,
+  addSharedUser,
+  removeSharedUser,
+  ShareSettings,
+  SharedUser
+} from '@/lib/firebase/service/uploadFile/service'
+import { Timestamp } from 'firebase/firestore'
 
 interface ShareModalProps {
   isOpen: boolean
   onClose: () => void
-  fileId?: string
-  fileName?: string
-  currentShareSettings?: {
-    shareId?: string
-    accessLevel: 'view' | 'download' | 'edit' | 'restricted'
-    requirePassword: boolean
-    hasPassword: boolean
-    expiresAt?: Date
-    allowedEmails?: string[]
-    viewCount?: number
-    downloadCount?: number
-  }
-}
-
-interface ShareUser {
-  email: string
-  status: 'pending' | 'active'
-  accessLevel: 'view' | 'download' | 'edit'
+  fileId: string
+  fileName: string
+  currentShareSettings?: ShareSettings
+  onSuccess?: () => void
 }
 
 export function ShareModal({ 
@@ -79,10 +63,15 @@ export function ShareModal({
   onClose, 
   fileId, 
   fileName,
-  currentShareSettings 
+  currentShareSettings,
+  onSuccess
 }: ShareModalProps) {
+  const { user } = useAuth()
+  
+  // Local state for share settings
   const [shareLink, setShareLink] = useState('')
-  const [accessLevel, setAccessLevel] = useState<'anyone' | 'restricted'>(
+  const [shareId, setShareId] = useState<string | undefined>(currentShareSettings?.shareId)
+  const [accessType, setAccessType] = useState<'anyone' | 'restricted'>(
     currentShareSettings?.accessLevel === 'restricted' ? 'restricted' : 'anyone'
   )
   const [linkAccess, setLinkAccess] = useState<'view' | 'download' | 'edit'>(
@@ -94,28 +83,69 @@ export function ShareModal({
   )
   const [password, setPassword] = useState('')
   const [showPasswordField, setShowPasswordField] = useState(false)
-  const [expiryEnabled, setExpiryEnabled] = useState(false)
-  const [expiryDate, setExpiryDate] = useState('')
+  const [expiryEnabled, setExpiryEnabled] = useState(!!currentShareSettings?.expiresAt)
+  const [expiryDate, setExpiryDate] = useState(
+    currentShareSettings?.expiresAt 
+      ? new Date(currentShareSettings.expiresAt.seconds * 1000).toISOString().slice(0, 16)
+      : ''
+  )
   const [newEmail, setNewEmail] = useState('')
-  const [sharedUsers, setSharedUsers] = useState<ShareUser[]>([])
+  const [sharedUsers, setSharedUsers] = useState<SharedUser[]>(
+    currentShareSettings?.sharedWith || []
+  )
   const [copied, setCopied] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [activeTab, setActiveTab] = useState('link')
+  const [isShared, setIsShared] = useState(!!currentShareSettings?.shareId)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-  // Generate or load share link
+  // Load initial data when modal opens
   useEffect(() => {
     if (isOpen && fileId) {
-      if (currentShareSettings?.shareId) {
-        const baseUrl = window.location.origin
-        setShareLink(`${baseUrl}/s/${currentShareSettings.shareId}`)
+      if (currentShareSettings?.shareableLink) {
+        setShareLink(currentShareSettings.shareableLink)
+        setShareId(currentShareSettings.shareId)
+        setIsShared(true)
+        setAccessType(currentShareSettings.accessLevel === 'restricted' ? 'restricted' : 'anyone')
+        setLinkAccess(currentShareSettings.accessLevel === 'restricted' ? 'view' : currentShareSettings.accessLevel)
+        setRequirePassword(currentShareSettings.requirePassword || false)
+        setExpiryEnabled(!!currentShareSettings.expiresAt)
+        if (currentShareSettings.expiresAt) {
+          setExpiryDate(new Date(currentShareSettings.expiresAt.seconds * 1000).toISOString().slice(0, 16))
+        }
+        setSharedUsers(currentShareSettings.sharedWith || [])
       } else {
-        // Generate new share ID
-        const newShareId = Math.random().toString(36).substring(2, 15)
-        const baseUrl = window.location.origin
-        setShareLink(`${baseUrl}/s/${newShareId}`)
+        // Reset to default state
+        setShareLink('')
+        setShareId(undefined)
+        setIsShared(false)
+        setAccessType('anyone')
+        setLinkAccess('view')
+        setRequirePassword(false)
+        setPassword('')
+        setShowPasswordField(false)
+        setExpiryEnabled(false)
+        setExpiryDate('')
+        setSharedUsers([])
       }
+      setHasUnsavedChanges(false)
     }
   }, [isOpen, fileId, currentShareSettings])
+
+  // Track changes
+  useEffect(() => {
+    if (isShared && shareId) {
+      const hasChanges = 
+        accessType !== (currentShareSettings?.accessLevel === 'restricted' ? 'restricted' : 'anyone') ||
+        linkAccess !== (currentShareSettings?.accessLevel === 'restricted' ? 'view' : currentShareSettings?.accessLevel) ||
+        requirePassword !== (currentShareSettings?.requirePassword || false) ||
+        (expiryEnabled && expiryDate !== (currentShareSettings?.expiresAt ? new Date(currentShareSettings.expiresAt.seconds * 1000).toISOString().slice(0, 16) : '')) ||
+        JSON.stringify(sharedUsers) !== JSON.stringify(currentShareSettings?.sharedWith || [])
+      
+      setHasUnsavedChanges(hasChanges)
+    }
+  }, [accessType, linkAccess, requirePassword, expiryEnabled, expiryDate, sharedUsers, isShared, shareId, currentShareSettings])
 
   // Handle copy link
   const handleCopyLink = async () => {
@@ -130,7 +160,7 @@ export function ShareModal({
   }
 
   // Handle add email
-  const handleAddEmail = () => {
+  const handleAddEmail = async () => {
     if (!newEmail || !newEmail.includes('@')) {
       toast.error('Please enter a valid email')
       return
@@ -141,72 +171,112 @@ export function ShareModal({
       return
     }
 
-    setSharedUsers([
-      ...sharedUsers,
-      {
-        email: newEmail,
-        status: 'pending',
-        accessLevel: linkAccess
-      }
-    ])
+    const newUser: SharedUser = {
+      email: newEmail,
+      accessLevel: linkAccess,
+      sharedAt: Timestamp.now()
+    }
+
+    setSharedUsers([...sharedUsers, newUser])
     setNewEmail('')
+    toast.success(`Added ${newEmail}`)
   }
 
   // Handle remove email
   const handleRemoveEmail = (email: string) => {
     setSharedUsers(sharedUsers.filter(u => u.email !== email))
+    toast.success(`Removed ${email}`)
   }
 
-  // Handle save share settings
-/*   const handleSave = async () => {
+  // Handle create new link
+  const handleCreateLink = async () => {
     setIsSaving(true)
     try {
-      const fileRef = doc(db, 'documents', fileId)
-      
-      // Generate share ID if not exists
-      const shareId = currentShareSettings?.shareId || 
-        Math.random().toString(36).substring(2, 15)
-
-      const shareSettings = {
-        shareId,
-        accessLevel: accessLevel === 'restricted' ? 'restricted' : linkAccess,
+      const link = await createShareLink(fileId, {
+        accessLevel: accessType === 'restricted' ? 'restricted' : linkAccess,
+        expiresAt: expiryEnabled && expiryDate ? new Date(expiryDate) : null,
         requirePassword,
-        ...(requirePassword && password ? { password } : {}),
-        ...(expiryEnabled && expiryDate ? { 
-          expiresAt: Timestamp.fromDate(new Date(expiryDate)) 
-        } : {}),
-        allowedEmails: sharedUsers.map(u => u.email),
-        viewCount: currentShareSettings?.viewCount || 0,
-        downloadCount: currentShareSettings?.downloadCount || 0,
-        updatedAt: Timestamp.now()
-      }
-
-      await updateDoc(fileRef, {
-        shareSettings,
-        isShared: true
+        password: requirePassword ? password : undefined,
+        sharedWith: sharedUsers.map(u => ({
+          email: u.email,
+          accessLevel: u.accessLevel
+        }))
       })
-
-      toast.success('Share settings updated')
-      onClose()
+      
+      // Extract shareId from the link
+      const match = link.match(/\/share\/([^\/]+)$/)
+      if (match && match[1]) {
+        setShareId(match[1])
+      }
+      
+      setShareLink(link)
+      setIsShared(true)
+      setHasUnsavedChanges(false)
+      
+      if (onSuccess) {
+        onSuccess()
+      }
+      
+      toast.success('Share link created successfully!')
+      
     } catch (error) {
-      console.error('Error saving share settings:', error)
-      toast.error('Failed to update share settings')
+      console.error('Error creating share link:', error)
+      toast.error('Failed to create share link')
     } finally {
       setIsSaving(false)
     }
-  } */
+  }
+
+  // Handle update settings
+  const handleUpdateSettings = async () => {
+    if (!shareId) return
+    
+    setIsUpdating(true)
+    try {
+      await updateShareSettings(fileId, {
+        accessLevel: accessType === 'restricted' ? 'restricted' : linkAccess,
+        requirePassword,
+        password: requirePassword ? password : null,
+        expiresAt: expiryEnabled && expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+        sharedWith: sharedUsers,
+        updatedAt: Timestamp.now()
+      })
+      
+      setHasUnsavedChanges(false)
+      
+      if (onSuccess) {
+        onSuccess()
+      }
+      
+      toast.success('Share settings updated')
+      
+    } catch (error) {
+      console.error('Error updating share settings:', error)
+      toast.error('Failed to update settings')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   // Handle disable sharing
- /*  const handleDisableSharing = async () => {
+  const handleDisableSharing = async () => {
     setIsSaving(true)
     try {
-      const fileRef = doc(db, 'documents', fileId)
-      await updateDoc(fileRef, {
-        shareSettings: null,
-        isShared: false
-      })
+      await disableSharing(fileId)
+      
+      // Reset local state
+      setIsShared(false)
+      setShareId(undefined)
+      setShareLink('')
+      setSharedUsers([])
+      setHasUnsavedChanges(false)
+      
+      if (onSuccess) {
+        onSuccess()
+      }
+      
       toast.success('Sharing disabled')
-      onClose()
+      
     } catch (error) {
       console.error('Error disabling sharing:', error)
       toast.error('Failed to disable sharing')
@@ -214,14 +284,14 @@ export function ShareModal({
       setIsSaving(false)
     }
   }
- */
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-xl">Share "Yahiko.png"</DialogTitle>
+          <DialogTitle className="text-xl">Share "{fileName}"</DialogTitle>
           <DialogDescription>
-            Add people, groups, and manage access permissions
+            Create a shareable link to this medical image
           </DialogDescription>
         </DialogHeader>
 
@@ -238,14 +308,14 @@ export function ShareModal({
             <div className="space-y-3">
               <Label>General access</Label>
               <div className="flex items-center gap-3 p-3 border rounded-lg">
-                {accessLevel === 'anyone' ? (
+                {accessType === 'anyone' ? (
                   <Globe className="h-5 w-5 text-muted-foreground" />
                 ) : (
                   <Lock className="h-5 w-5 text-muted-foreground" />
                 )}
                 <Select 
-                  value={accessLevel} 
-                  onValueChange={(v: 'anyone' | 'restricted') => setAccessLevel(v)}
+                  value={accessType} 
+                  onValueChange={(v: 'anyone' | 'restricted') => setAccessType(v)}
                 >
                   <SelectTrigger className="w-[180px] border-0 p-0 focus:ring-0">
                     <SelectValue />
@@ -256,7 +326,7 @@ export function ShareModal({
                   </SelectContent>
                 </Select>
                 <span className="text-sm text-muted-foreground flex-1">
-                  {accessLevel === 'anyone' 
+                  {accessType === 'anyone' 
                     ? 'Anyone on the internet can access'
                     : 'Only specific people can access'
                   }
@@ -265,40 +335,48 @@ export function ShareModal({
             </div>
 
             {/* Link Access Level (shown only for anyone) */}
-            {accessLevel === 'anyone' && (
+            {accessType === 'anyone' && (
               <div className="space-y-3">
                 <Label>Access level</Label>
-                <Select value={linkAccess} onValueChange={(v: any) => setLinkAccess(v)}>
+                <Select 
+                  value={linkAccess} 
+                  onValueChange={(v: any) => setLinkAccess(v)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="view">Can view</SelectItem>
-                    <SelectItem value="download">Can download</SelectItem>
-                    <SelectItem value="edit">Can edit</SelectItem>
+                    <SelectItem value="download">Can view and download</SelectItem>
+                    <SelectItem value="edit">Can view, download and edit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
 
             {/* Share Link Display */}
-            <div className="space-y-3">
-              <Label>Share link</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/30">
-                  <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm truncate">{shareLink}</span>
+            {isShared && shareLink ? (
+              <div className="space-y-3">
+                <Label>Share link</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                    <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm truncate">{shareLink}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleCopyLink}
+                    className="flex-shrink-0"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={handleCopyLink}
-                  className="flex-shrink-0"
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Share this link with anyone. They'll be redirected to Medora to view the image.
+                </p>
               </div>
-            </div>
+            ) : null}
 
             {/* Additional Settings */}
             <div className="space-y-4 pt-2">
@@ -359,16 +437,16 @@ export function ShareModal({
             {/* Stats (if available) */}
             {(currentShareSettings?.viewCount || currentShareSettings?.downloadCount) && (
               <div className="flex gap-4 p-3 bg-muted/30 rounded-lg">
-                {currentShareSettings?.viewCount !== undefined && (
+                {currentShareSettings?.viewCount !== undefined && currentShareSettings.viewCount > 0 && (
                   <div className="flex items-center gap-1 text-sm">
                     <Eye className="h-4 w-4 text-muted-foreground" />
-                    <span>{currentShareSettings.viewCount} views</span>
+                    <span>{currentShareSettings.viewCount} {currentShareSettings.viewCount === 1 ? 'view' : 'views'}</span>
                   </div>
                 )}
-                {currentShareSettings?.downloadCount !== undefined && (
+                {currentShareSettings?.downloadCount !== undefined && currentShareSettings.downloadCount > 0 && (
                   <div className="flex items-center gap-1 text-sm">
                     <Download className="h-4 w-4 text-muted-foreground" />
-                    <span>{currentShareSettings.downloadCount} downloads</span>
+                    <span>{currentShareSettings.downloadCount} {currentShareSettings.downloadCount === 1 ? 'download' : 'downloads'}</span>
                   </div>
                 )}
               </div>
@@ -386,7 +464,10 @@ export function ShareModal({
                   onChange={(e) => setNewEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
                 />
-                <Select value={linkAccess} onValueChange={(v: any) => setLinkAccess(v)}>
+                <Select 
+                  value={linkAccess} 
+                  onValueChange={(v: any) => setLinkAccess(v)}
+                >
                   <SelectTrigger className="w-[130px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -410,11 +491,13 @@ export function ShareModal({
               <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>SU</AvatarFallback>
+                    <AvatarFallback>
+                      {user?.email?.substring(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">Subhro (you)</p>
-                    <p className="text-xs text-muted-foreground">subhrokolay2@gmail.com</p>
+                    <p className="text-sm font-medium">You</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <Badge variant="secondary" className="ml-2">Owner</Badge>
                 </div>
@@ -432,10 +515,6 @@ export function ShareModal({
                     <div>
                       <p className="text-sm">{user.email}</p>
                       <div className="flex items-center gap-2">
-                        <p className="text-xs text-muted-foreground">
-                          {user.status === 'pending' ? 'Pending' : 'Active'}
-                        </p>
-                        <span>•</span>
                         <Select 
                           value={user.accessLevel}
                           onValueChange={(v: any) => {
@@ -479,12 +558,12 @@ export function ShareModal({
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between p-6 pt-2 border-t">
-          {currentShareSettings?.shareId ? (
+          {isShared ? (
             <Button
               variant="ghost"
               className="text-destructive hover:text-destructive"
-            /*   onClick={handleDisableSharing} */
-              disabled={isSaving}
+              onClick={handleDisableSharing}
+              disabled={isSaving || isUpdating}
             >
               <X className="h-4 w-4 mr-2" />
               Disable sharing
@@ -492,13 +571,27 @@ export function ShareModal({
           ) : (
             <div></div>
           )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-auto">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              Close
             </Button>
-            <Button /* onClick={handleSave} */ disabled={isSaving}>
-              {isSaving ? 'Saving...' : currentShareSettings?.shareId ? 'Update' : 'Create link'}
-            </Button>
+            {!isShared && (
+              <Button onClick={handleCreateLink} disabled={isSaving}>
+                {isSaving ? 'Creating...' : 'Create link'}
+              </Button>
+            )}
+            {isShared && hasUnsavedChanges && (
+              <Button onClick={handleUpdateSettings} disabled={isUpdating}>
+                {isUpdating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update settings'
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

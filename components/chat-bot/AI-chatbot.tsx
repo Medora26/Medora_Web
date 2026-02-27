@@ -205,7 +205,7 @@ const AIChatBox = ({ isOpen, onClose }: AIChatBoxProps) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [patientProfile, setPatientProfile] = useState<PatientProfileData | null>(null)
-  const {saveConversation, loadTodayHistory} = useChatHistory();
+  const {saveConversation, loadTodayHistory , loadHistory} = useChatHistory();
   //fetch patients data
  useEffect(() => {
   if (user) {
@@ -225,7 +225,7 @@ const AIChatBox = ({ isOpen, onClose }: AIChatBoxProps) => {
 useEffect(() => {
   if (user) {
     // Load today's chat history when user logs in
-    loadTodayHistory().then(historyMessages => {
+    loadHistory().then(historyMessages => {
       if (historyMessages && historyMessages.length > 0) {
         // Sort by timestamp ascending (oldest first) just to be safe
         const sortedMessages = [...historyMessages].sort((a, b) => {

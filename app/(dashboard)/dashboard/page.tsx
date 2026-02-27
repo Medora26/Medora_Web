@@ -409,25 +409,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* System Health / Alerts */}
-        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                  System Status: Healthy
-                </p>
-                <p className="text-xs font-medium text-blue-600/70 dark:text-blue-400/70">
-                  {stats.totalDocuments} documents • Last backup: Today at {new Date().toLocaleTimeString()}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="bg-white dark:bg-background">
-                View Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
     </DashboardLayout>
   )
