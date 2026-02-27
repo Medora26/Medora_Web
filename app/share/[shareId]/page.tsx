@@ -27,6 +27,10 @@ import {
   SharedUser
 } from '@/lib/firebase/service/uploadFile/service'
 import { Timestamp } from 'firebase/firestore'
+import Link from 'next/link'
+import { LOGO } from '@/public/logo/logo'
+import Navbar from '@/components/navbar'
+import { formatBytes } from '@/utils/utils'
 
 // Define proper types
 interface SharedDocument {
@@ -386,91 +390,120 @@ const fetchSharedDocument = async (skipPasswordCheck = false) => {
   if (!document) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+  <div className="min-h-screen">
+  {/* Header */}
+  <header className="sticky top-0 z-50">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between h-16">
+        <Link href="/" className="flex items-center">
+          <Image
+            src={LOGO.MEDORA_LOGO}
+            alt="Medora"
+            width={90}
+            height={10}
+            className="w-20 object-contain"
+            priority
+          />
+        </Link>
+
+        {!user ? (
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => router.push('/sign-in')} size="sm">
+              Sign in
+            </Button>
+            <Button onClick={() => router.push('/sign-up')} size="sm">
+              Sign up
+            </Button>
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => router.push('/dashboard')} size="sm">
+            Dashboard
+          </Button>
+        )}
+      </div>
+    </div>
+  </header>
+
+  {/* Main Content */}
+  <main className="max-w-4xl mx-auto px-4 py-16">
+    <div className="space-y-4">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-              <FileText className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">Medora</span>
-            </div>
-            {!user && (
-              <Button variant="outline" onClick={() => router.push('/signup')}>
-                Sign up for Medora
-              </Button>
-            )}
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-xl font-medium">{document.documentName}</h1>
         </div>
-      </header>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{document.shareSettings?.viewCount || 0} views</span>
+          <span>•</span>
+          <span>{formatDate(document.uploadedAt)}</span>
+        </div>
+      </div>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Document Info */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">{document.documentName}</h1>
-            {document.description && (
-              <p className="text-muted-foreground mb-4">{document.description}</p>
-            )}
-            
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <User className="h-4 w-4" />
-                <span>Shared by {document.userEmail || 'Medora user'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>Uploaded {formatDate(document.uploadedAt)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                <span>{document.shareSettings?.viewCount || 0} views</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Image Display */}
-          <Card className="overflow-hidden mb-6">
-            <div className="aspect-video relative bg-black/5">
-              <Image
-                src={document.cloudinary.url}
-                alt={document.documentName}
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-3">
-           {document.shareSettings?.accessLevel === 'download' || document.shareSettings?.accessLevel === 'edit' ? (
-  <Button onClick={handleDownload} size="lg">
-    <Download className="h-4 w-4 mr-2" />
-    Download Image
-  </Button>
-) : null}
-            
-            {!user && (
-              <Button variant="outline" onClick={() => router.push('/signup')} size="lg">
-                Create free Medora account
-              </Button>
-            )}
-          </div>
-
-          {/* Info Message for Restricted Access */}
-          {document.shareSettings?.accessLevel === 'restricted' && user && (
-            <div className="mt-6 p-4 bg-primary/5 rounded-lg border">
-              <p className="text-sm">
-                <span className="font-medium">Access granted:</span> You're viewing this document because{' '}
-                {document.userEmail} shared it with you.
-              </p>
-            </div>
+      {/* Image Card */}
+      <div className="relative group">
+        <div className="relative aspect-[16/9] rounded-lg overflow-hidden border">
+          <Image
+            src={document.cloudinary.url}
+            alt={document.documentName}
+            fill
+            className="object-contain"
+            priority
+          />
+          
+          {/* Download button - only show if allowed */}
+          {(document.shareSettings?.accessLevel === 'download' || document.shareSettings?.accessLevel === 'edit') && (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleDownload}
+              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
           )}
         </div>
-      </main>
+
+        {/* Subtle metadata */}
+        <div className="absolute bottom-3 left-3 flex gap-2 text-xs text-muted-foreground">
+          <span>{document.cloudinary.format?.toUpperCase()}</span>
+          <span>•</span>
+          <span>{formatBytes(document.cloudinary.bytes)}</span>
+        </div>
+      </div>
+
+      {/* Shared by line */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <span className="text-xs font-medium">
+            {document.userEmail?.charAt(0).toUpperCase() || 'U'}
+          </span>
+        </div>
+        <span>
+          <span className="text-foreground">{document.userEmail || 'Medora user'}</span> shared this file
+        </span>
+      </div>
+
+      {/* Sign up prompt - minimal */}
+      {!user && (
+        <div className="text-sm text-muted-foreground">
+          <Button variant="link" onClick={() => router.push('/signup')} className="px-0 h-auto">
+            Sign up
+          </Button>
+          <span> to save to your account</span>
+        </div>
+      )}
+
+      {/* Restricted access message - minimal */}
+      {document.shareSettings?.accessLevel === 'restricted' && user && (
+        <div className="text-sm text-muted-foreground">
+          <Lock className="h-3 w-3 inline mr-1" />
+          Shared privately with you
+        </div>
+      )}
     </div>
+  </main>
+</div>
   )
 }
 
