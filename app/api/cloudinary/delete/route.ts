@@ -15,7 +15,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing publicId" });
     }
 
-    const result = await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "auto", 
+    });
+
+    console.log("Cloudinary delete result:", result);
 
     return NextResponse.json({
       success: true,
