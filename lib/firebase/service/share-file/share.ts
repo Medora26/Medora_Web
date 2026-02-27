@@ -7,8 +7,13 @@ import {
   getDocs,
   doc,
   updateDoc,
-  increment
+  increment,
+  getDoc,
+  arrayRemove,
+  serverTimestamp,
+  deleteDoc
 } from 'firebase/firestore';
+import { SharedUser } from '../uploadFile/service';
 
 export interface SharedDocumentInfo {
   id: string;
@@ -87,28 +92,63 @@ export const getSharedDocument = async (shareId: string): Promise<SharedDocument
   }
 };
 
-// Verify password for shared document
-export const verifySharedDocumentPassword = async (
-  shareId: string, 
+// In your service file, replace the verifySharePassword function with this:
+
+export const verifySharePassword = async (
+  shareId: string,
   password: string
 ): Promise<boolean> => {
+  console.log('🔍 [PASSWORD] ===== START verifySharePassword =====');
+  console.log('🔍 [PASSWORD] Verifying password for shareId:', shareId);
+  
   try {
-    const documentsCollection = collection(db, 'documents');
-    const q = query(
-      documentsCollection,
-      where('shareSettings.shareId', '==', shareId)
-    );
+    // First, get the share document from public shares collection
+    console.log('🔍 [PASSWORD] Getting share document from shares collection...');
+    const shareDocRef = doc(db, 'shares', shareId);
+    const shareDocSnap = await getDoc(shareDocRef);
     
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
+    if (!shareDocSnap.exists()) {
+      console.log('❌ [PASSWORD] Share document not found');
       return false;
     }
     
-    const data = querySnapshot.docs[0].data();
-    return data.shareSettings?.password === password;
+    const shareData = shareDocSnap.data();
+    console.log('✅ [PASSWORD] Share document found for file:', shareData.fileId);
+    console.log('🔍 [PASSWORD] Document name:', shareData.documentName);
+    console.log('🔍 [PASSWORD] Requires password:', shareData.requirePassword);
+    console.log('🔍 [PASSWORD] Has password:', shareData.hasPassword);
+    
+    // Now get the original document to check the actual password
+    // The user must be authenticated to read the original document
+    if (!shareData.fileId) {
+      console.log('❌ [PASSWORD] No fileId in share document');
+      return false;
+    }
+    
+    console.log('🔍 [PASSWORD] Getting original document...');
+    const originalDocRef = doc(db, 'documents', shareData.fileId);
+    const originalDocSnap = await getDoc(originalDocRef);
+    
+    if (!originalDocSnap.exists()) {
+      console.log('❌ [PASSWORD] Original document not found');
+      return false;
+    }
+    
+    const originalData = originalDocSnap.data();
+    console.log('✅ [PASSWORD] Original document found');
+    console.log('🔍 [PASSWORD] Stored password exists:', !!originalData.shareSettings?.password);
+    
+    // Compare passwords
+    const isValid = originalData.shareSettings?.password === password;
+    console.log('🔍 [PASSWORD] Password valid:', isValid);
+    console.log('🔍 [PASSWORD] ===== END verifySharePassword =====');
+    
+    return isValid;
+    
   } catch (error) {
-    console.error('Error verifying password:', error);
+    console.error('❌ [PASSWORD] Error verifying password:');
+    console.error('❌ [PASSWORD] Full error:', error);
+    console.log('🔍 [PASSWORD] ===== END verifySharePassword (error) =====');
     throw error;
   }
 };
@@ -132,5 +172,143 @@ export const trackSharedDocumentDownload = async (shareId: string) => {
     }
   } catch (error) {
     console.error('Error tracking download:', error);
+  }
+};
+
+// Update trackShareView
+export const trackShareView = async (shareId: string) => {
+  console.log('🔍 [TRACK] Tracking view for share:', shareId);
+  
+  try {
+    // Get the share document first
+    const shareDocRef = doc(db, 'shares', shareId);
+    const shareDocSnap = await getDoc(shareDocRef);
+    
+    if (!shareDocSnap.exists()) {
+      console.log('❌ [TRACK] Share document not found');
+      return;
+    }
+    
+    const shareData = shareDocSnap.data();
+    
+    // Update view count in original document
+    if (shareData.fileId) {
+      const originalDocRef = doc(db, 'documents', shareData.fileId);
+      await updateDoc(originalDocRef, {
+        'shareSettings.viewCount': increment(1)
+      });
+      console.log('✅ [TRACK] View count incremented for document:', shareData.fileId);
+    }
+  } catch (error) {
+    console.error('❌ [TRACK] Error tracking view:', error);
+  }
+};
+
+// Update trackShareDownload
+export const trackShareDownload = async (shareId: string) => {
+  console.log('🔍 [TRACK] Tracking download for share:', shareId);
+  
+  try {
+    // Get the share document first
+    const shareDocRef = doc(db, 'shares', shareId);
+    const shareDocSnap = await getDoc(shareDocRef);
+    
+    if (!shareDocSnap.exists()) {
+      console.log('❌ [TRACK] Share document not found');
+      return;
+    }
+    
+    const shareData = shareDocSnap.data();
+    
+    // Update download count in original document
+    if (shareData.fileId) {
+      const originalDocRef = doc(db, 'documents', shareData.fileId);
+      await updateDoc(originalDocRef, {
+        'shareSettings.downloadCount': increment(1)
+      });
+      console.log('✅ [TRACK] Download count incremented for document:', shareData.fileId);
+    }
+  } catch (error) {
+    console.error('❌ [TRACK] Error tracking download:', error);
+  }
+};
+
+
+// Update disableSharing to also remove from shares collection
+export const disableSharing = async (documentId: string) => {
+  try {
+    const docRef = doc(db, 'documents', documentId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      throw new Error('Document not found');
+    }
+    
+    const data = docSnap.data();
+    const shareId = data.shareSettings?.shareId;
+    
+    // Remove from shares collection if exists
+    if (shareId) {
+      const shareDocRef = doc(db, 'shares', shareId);
+      await deleteDoc(shareDocRef);
+    }
+    
+    // Update document
+    await updateDoc(docRef, {
+      shareSettings: null,
+      updatedAt: serverTimestamp()
+    });
+    
+  } catch (error) {
+    console.error('Error disabling sharing:', error);
+    throw error;
+  }
+};
+
+// Update removeSharedUser to also update shares collection
+export const removeSharedUser = async (
+  documentId: string,
+  userEmail: string
+) => {
+  try {
+    const docRef = doc(db, 'documents', documentId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const userToRemove = data.shareSettings?.sharedWith?.find(
+        (u: SharedUser) => u.email === userEmail
+      );
+      
+      if (userToRemove) {
+        // Update document
+        await updateDoc(docRef, {
+          'shareSettings.sharedWith': arrayRemove (userToRemove),
+          'shareSettings.updatedAt': serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        // Update shares collection if exists
+        const shareId = data.shareSettings?.shareId;
+        if (shareId) {
+          const shareDocRef = doc(db, 'shares', shareId);
+          const shareDocSnap = await getDoc(shareDocRef);
+          
+          if (shareDocSnap.exists()) {
+            const shareData = shareDocSnap.data();
+            const updatedSharedWith = (shareData.sharedWith || []).filter(
+              (email: string) => email !== userEmail
+            );
+            
+            await updateDoc(shareDocRef, {
+              sharedWith: updatedSharedWith
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error removing shared user:', error);
+    throw error;
   }
 };

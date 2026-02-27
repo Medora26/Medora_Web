@@ -49,13 +49,41 @@ export function GridViewCard({
   formatBytes
 }: GridViewCardProps) {
   const [shareDialog, setShareDialog] = useState(false);
-  const [selectedFileForShare, setSelectedFileForShare] = useState<{
-  id: string
-  name: string
-  settings?: any
-} | null>(null)
-// Update handleShare function
 
+  // Prepare file data for sharing
+  const getFileShareData = () => {
+    return {
+      id: file.id,
+      name: file.documentName || 'Untitled',
+      settings: file.shareSettings || {
+        shareId: file.shareId,
+        accessLevel: file.accessLevel,
+        requirePassword: file.requirePassword,
+        hasPassword: !!file.sharePassword,
+        expiresAt: file.shareExpiry,
+        allowedEmails: file.sharedWith || [],
+        viewCount: file.viewCount || 0,
+        downloadCount: file.downloadCount || 0
+      }
+    }
+  }
+
+  const handleShareClick = () => {
+   
+    // Also call the parent onShare if needed for tracking
+    onShare(file.id)
+  }
+
+  const handleShareClose = () => {
+    setShareDialog(false)
+  }
+
+  const handleShareSuccess = () => {
+    // You can refresh the file data here if needed
+    // For example, you might want to update the local file state
+    // with new share settings
+    setShareDialog(false)
+  }
 
   return (
    <>
@@ -94,6 +122,16 @@ export function GridViewCard({
           </div>
         )}
 
+        {/* Share Badge - Show if file is shared */}
+        {file.isShared && (
+          <div className="absolute bottom-2 left-2 z-10">
+            <span className="bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+              <Share2 className="h-3 w-3" />
+              Shared
+            </span>
+          </div>
+        )}
+
         {/* Action Menu */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
           <DropdownMenu>
@@ -113,9 +151,9 @@ export function GridViewCard({
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShareDialog(true)} >
+              <DropdownMenuItem onClick={() => setShareDialog(true)}>
                 <Share2 className="h-4 w-4 mr-2" />
-                Share
+                {file.isShared ? 'Manage sharing' : 'Share'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onStarToggle(file.id, file.isStarred)}>
                 <Star className="h-4 w-4 mr-2" />
@@ -152,18 +190,35 @@ export function GridViewCard({
             <span>•</span>
             <span>{formatBytes(file.cloudinary?.bytes || 0)}</span>
           </div>
+          
+          {/* Share Stats - Show if file is shared */}
+          {file.isShared && (file.viewCount > 0 || file.downloadCount > 0) && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+              {file.viewCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  {file.viewCount} {file.viewCount === 1 ? 'view' : 'views'}
+                </span>
+              )}
+              {file.downloadCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <Download className="h-3 w-3" />
+                  {file.downloadCount} {file.downloadCount === 1 ? 'download' : 'downloads'}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
 
     <ShareModal
-     isOpen={shareDialog}
-      onClose={() => {
-      
-        setShareDialog(false)
-      setSelectedFileForShare(null)
-    }}
-   
+      isOpen={shareDialog}
+      onClose={handleShareClose}
+      fileId={getFileShareData().id}
+      fileName={getFileShareData().name}
+      currentShareSettings={getFileShareData().settings}
+      onSuccess={handleShareSuccess}
     />
    </>
   )
