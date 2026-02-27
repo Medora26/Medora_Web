@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button'
 import { signOutUser } from '@/lib/firebase/service/auth'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts'
 // Import shadcn/ui components
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
@@ -161,7 +169,7 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6 px-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -293,45 +301,37 @@ const Dashboard = () => {
 
           {/* Upload Trends */}
           <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span>Upload Activity (Last 7 Days)</span>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="h-40 flex items-end justify-between gap-2">
-                  {[1,2,3,4,5,6,7].map(i => (
-                    <div key={i} className="flex-1 h-full bg-muted animate-pulse rounded-t-md" />
-                  ))}
-                </div>
-              ) : (
-                <div className="h-40 flex items-end justify-between gap-2">
-                  {weeklyActivity.map((value, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                      <div 
-                        className="w-full bg-primary/20 rounded-t-md transition-all duration-500"
-                        style={{ 
-                          height: value > 0 ? `${(value / maxWeeklyValue) * 100}%` : '4px',
-                          minHeight: value > 0 ? '8px' : '4px',
-                          backgroundColor: value > 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted))'
-                        }} 
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
-                      </span>
-                      {value > 0 && (
-                        <span className="text-xs font-medium absolute -mt-6 bg-background px-1 rounded">
-                          {value}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+  <CardHeader>
+    <CardTitle className="text-sm flex items-center justify-between">
+      <span>Upload Activity (Last 7 Days)</span>
+      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    {loading ? (
+      <div className="h-[200px] flex items-end justify-between gap-2">
+        {[1,2,3,4,5,6,7].map(i => (
+          <div key={i} className="flex-1 h-full bg-muted animate-pulse rounded" />
+        ))}
+      </div>
+    ) : (
+      <div className="h-[200px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={weeklyActivity.map((value, index) => ({
+            day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
+            uploads: value
+          }))}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="day" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="uploads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    )}
+  </CardContent>
+</Card>
         </div>
 
         {/* Bottom Grid */}
