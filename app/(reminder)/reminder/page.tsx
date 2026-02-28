@@ -137,7 +137,7 @@ await createReminder(reminderPayload);
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">

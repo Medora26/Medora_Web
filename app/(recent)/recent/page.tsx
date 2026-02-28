@@ -196,7 +196,7 @@ const handleDownload = (url: string, format: string) => {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6">
 
         {/* header */}
         <div>

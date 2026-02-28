@@ -169,7 +169,7 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6 px-4">
+      <div className="flex-1 space-y-6 ">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -322,7 +322,7 @@ const Dashboard = () => {
             uploads: value
           }))}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="day" />
+            <XAxis  dataKey="day" />
             <YAxis allowDecimals={false} />
             <Tooltip />
             <Bar dataKey="uploads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
