@@ -439,8 +439,8 @@ const SignInContent = () => {
   const renderOTPForm = () => (
     <form onSubmit={handleOTPVerify} className="space-y-6">
       <div className="text-center">
-        <p className="text-gray-400 mb-2">Enter OTP sent to</p>
-        <p className="font-medium text-blue-300 mb-6">{email}</p>
+        <p className=" mb-2">Enter OTP sent to</p>
+        <p className="font-medium mb-6">{email}</p>
         
         <div className="space-y-2">
           <Label htmlFor="otp" className="text-sm font-medium">
@@ -454,7 +454,7 @@ const SignInContent = () => {
             disabled={loading}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="Enter OTP"
-            className="w-full py-6 border-none bg-neutral-900 text-center text-xl tracking-widest"
+            className="w-full py-6 border-none  text-center text-xl tracking-widest"
             maxLength={6}
             pattern="\d{6}"
             inputMode="numeric"
