@@ -3,7 +3,7 @@
 import Link from "next/link";
 import AnimatedContent from "./animated-content";
 import { StarIcon } from "lucide-react";
-import Image from "next/image";
+
 import Navbar from "../../navbar";
 
 export default function HeroSection() {
@@ -42,9 +42,7 @@ export default function HeroSection() {
                          >Access</span> Your <span className="bg-gradient-to-r from-blue-600 to-blue-300 text-transparent bg-clip-text">Medical Record,</span> Anytime, Anywhere</span>
                           
                         </div>
-                        <div className="absolute -top-5 right-13 hidden md:block">
-                            {/* <CustomIcon icon={SparkleIcon} dir="right" /> */}
-                        </div>
+                       
                     </AnimatedContent>
                     <AnimatedContent distance={30} delay={0.2}>
                         <p className="text-center text-base/7 font-semibold   max-w-xl mt-4">
