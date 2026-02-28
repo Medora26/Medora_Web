@@ -32,6 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { downloadFile } from '@/lib/utils/downloadFile'
 
 // Helper function to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -249,9 +250,9 @@ const handleViewFile = (fileId: string) => {
 };
 
   // Handle download
-  const handleDownload = (url: string, filename: string) => {
-    window.open(url, '_blank')
-  }
+const handleDownload = (url: string, format: string) => {
+  downloadFile(url, format)
+}
 
   const title = filteredData.length > 0 ? filteredData[0].documentName : null;
 
@@ -486,7 +487,7 @@ const handleViewFile = (fileId: string) => {
                           <Eye className="h-4 w-4 mr-2" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDownload(item.cloudinary?.url, item.documentName)}>
+                        <DropdownMenuItem onClick={() =>handleDownload(item.cloudinary?.url, item.cloudinary?.format)}>
                           <Download className="h-4 w-4 mr-2" />
                           Download
                         </DropdownMenuItem>

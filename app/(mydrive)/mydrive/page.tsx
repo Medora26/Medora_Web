@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation'
 import { GridViewCard } from '@/components/my-drive/grid/my-drive-grid'
 import { ListViewRow } from '@/components/my-drive/list/list-view'
 import { EmptyState } from '@/components/my-drive/empty-state'
+import { downloadFile } from '@/lib/utils/downloadFile'
 
 // Helper function to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -163,10 +164,9 @@ const handleViewFile = (fileId: string) => {
   router.push(`/view/${fileId}`);
 };
   // Handle download
-  const handleDownload = (url: string, filename: string) => {
-    window.open(url, '_blank')
-  }
-
+const handleDownload = (url: string, format: string) => {
+  downloadFile(url, format)
+}
   // Handle share
   const handleShare = (fileId: string) => {
     router.push(`/dashboard/share/${fileId}`)

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { toggleDocumentStarred } from '@/lib/firebase/service/uploadFile/service'
+import { downloadFile } from '@/lib/utils/downloadFile'
 
 interface DocumentData {
   id: string
@@ -142,7 +143,14 @@ export default function ViewPage() {
             </div>
           </div>
 
-          <Button onClick={() => window.open(document.cloudinary.url)}>
+          <Button
+  onClick={() =>
+    downloadFile(
+      document.cloudinary.url,
+      document.cloudinary.format
+    )
+  }
+>
             <Download className="h-4 w-4 mr-2" />
             Download
           </Button>

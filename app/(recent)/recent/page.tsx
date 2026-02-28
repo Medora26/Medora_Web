@@ -51,6 +51,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import Image from "next/image";
 import { toast } from "sonner";
+import { downloadFile } from "@/lib/utils/downloadFile";
 
 
 // helpers
@@ -156,10 +157,9 @@ const handleViewFile = (fileId: string) => {
   router.push(`/view/${fileId}`);
 };
 
-  const handleDownload = (url: string, documentName: any) => {
-    window.open(url, "_blank");
-  };
-
+const handleDownload = (url: string, format: string) => {
+  downloadFile(url, format)
+}
   const handleShare = (fileId: string) => {
     router.push(`/dashboard/share/${fileId}`);
   };

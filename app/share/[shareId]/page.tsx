@@ -31,6 +31,7 @@ import Link from 'next/link'
 import { LOGO } from '@/public/logo/logo'
 import Navbar from '@/components/navbar'
 import { formatBytes } from '@/utils/utils'
+import { downloadFile } from '@/lib/utils/downloadFile'
 
 // Define proper types
 interface SharedDocument {
@@ -270,7 +271,7 @@ const fetchSharedDocument = async (skipPasswordCheck = false) => {
     
     try {
       console.log('🔍 [DOWNLOAD] Downloading document:', document.documentName);
-      window.open(document.cloudinary.url, '_blank')
+     downloadFile(document.cloudinary.url, document.documentName) 
       if (shareId) {
         await trackShareDownload(shareId)
       }

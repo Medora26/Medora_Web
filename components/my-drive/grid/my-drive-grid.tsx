@@ -147,7 +147,7 @@ export function GridViewCard({
                 <Eye className="h-4 w-4 mr-2" />
                 View
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDownload(file.cloudinary?.url, file.documentName)}>
+              <DropdownMenuItem onClick={() => onDownload(file.cloudinary.url, file.cloudinary.format)}>
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </DropdownMenuItem>
