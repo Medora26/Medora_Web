@@ -79,7 +79,7 @@ const toggleTheme = () => {
        <SidebarTrigger /> 
       
       {/* Search Bar - Clean and minimal */}
-      <div className="flex-1 max-w-md">
+     {/*  <div className="flex-1 max-w-md">
         <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -90,7 +90,7 @@ const toggleTheme = () => {
             className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </form>
-      </div>
+      </div> */}
 
       {/* Right Side - Minimal */}
       <div className="flex items-center gap-2">

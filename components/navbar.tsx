@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, LayoutDashboard } from "lucide-react";
+import { div } from 'three/src/nodes/math/OperatorNode.js';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +59,7 @@ const handleLogout = async () => {
     <>
       {/* NAVBAR */}
 
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between  pl-4 pr-4 lg:pl-8 lg:pr-12 bg-transparent">
+      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between  lg:pl-8 lg:pr-12 bg-transparent">
       
 
       <nav
@@ -116,10 +117,13 @@ const handleLogout = async () => {
 
         {/* CTA */}
 <div className="flex items-center gap-2">
-  <ThemeToggleButton variant="circle-blur" />
+  <div className='hidden md:block'>
+    <ThemeToggleButton variant="circle-blur" /> 
+  </div>
 
   {user ? (
-    <DropdownMenu>
+    <div className='hidden md:block'>
+      <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="h-9 w-9 rounded-full bg-blue-500 text-white font-semibold">
           <Avatar className="h-9 w-9">
@@ -156,6 +160,7 @@ const handleLogout = async () => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   ) : (
     <Link
       href="/sign-up"
@@ -181,6 +186,7 @@ const handleLogout = async () => {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
+        <ThemeToggleButton/>
         {links.map((link) => (
           <Link
             key={link.name}

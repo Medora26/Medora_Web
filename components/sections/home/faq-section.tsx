@@ -29,7 +29,7 @@ const data = [
 
 
   return (
-    <section id="faq" className='scroll-mt-18 flex flex-col items-center justify-center py-24'>
+    <section id="faq" className='scroll-mt-18 flex flex-col items-center px-10 md:px-0 justify-center py-24'>
 
       <SectionTitle
         title="FAQ's"
