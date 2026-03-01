@@ -217,11 +217,16 @@ const SignUp = () => {
     <AuthLayout>
       <Card className="w-full max-w-md mx-auto border-0 relative bg-none shadow-none">
         <CardHeader className="text-center relative ">
-          <Image
+         <Link
+          href={'/'}
+          className='cursor-pointer'
+         >
+           <Image
             alt='Medora Logo'
             src={LOGO.MEDORA_LOGO}
             className='h-24 w-24 fixed top-1 right-0'
           />
+         </Link>
           <CardTitle className="text-3xl md:text-xl font-bold">
             Smarter care with Medora
           </CardTitle>

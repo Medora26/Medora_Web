@@ -809,3 +809,22 @@ export async function getCurrentUserWithData(): Promise<{
 export function getCurrentUser(): User | null {
   return auth.currentUser;
 }
+
+// Skip onboarding function
+export async function skipOnboarding(userId: string): Promise<{ 
+  success: boolean; 
+  error?: string 
+}> {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      hasCompletedOnboarding: true,
+      updatedAt: new Date()
+    });
+    console.log("✅ Onboarding skipped for user:", userId);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Error skipping onboarding:", error);
+    return { success: false, error: error.message || "Failed to skip onboarding" };
+  }
+}

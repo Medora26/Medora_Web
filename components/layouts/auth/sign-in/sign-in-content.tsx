@@ -513,13 +513,15 @@ const SignInContent = () => {
     <AuthLayout>
       <Card className="w-full max-w-md mx-auto border-0 relative bg-none shadow-none">
         <CardHeader className="text-center space-y-2">
+         <Link href={'/'} className='cursor-pointer'>
           <Image
             alt='Medora Logo'
             src={LOGO.MEDORA_LOGO}
             className='h-24 w-24 fixed top-1 right-0'
           />
-          <CardTitle className="text-3xl md:text-4xl font-bold">
-            {step === 'login' ? `Welcome back` : 'Enter OTP'}
+         </Link>
+          <CardTitle className="text-3xl md:text-3xl font-bold">
+            {step === 'login' ? `Welcome back to Medora` : 'Enter OTP'}
           </CardTitle>
           <CardDescription>
             {step === 'login' ? 'Sign in to access your account' : 'Enter the OTP sent to your email'}

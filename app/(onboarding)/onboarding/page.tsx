@@ -38,7 +38,10 @@ import { useAuth } from '@/context/auth/authContext';
 import { DocumentItem, PatientOnboardingFormData } from '@/types/user/patients';
 import { PatientService } from '@/lib/firebase/service/patients/service';
 import { uploadToCloudinary } from '@/lib/cloudinary/cloudinary-util';
-
+import { skipOnboarding } from "@/lib/firebase/service/auth";
+import { toast } from "sonner";
+import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 // Document types for each step
 const documentTypes = {
   personal: [
@@ -75,6 +78,9 @@ const MAX_DOCUMENTS_PER_STEP = 4;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function OnboardingPage() {
+
+  // skip onboarding states 
+  const [openSkip, setOpenSkip] = useState(false)
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
  /*  const [user, setUser] = useState<User | null>(null); */
@@ -205,7 +211,33 @@ export default function OnboardingPage() {
 
     return () => unsubscribe();
   }, [router]); */
-const { user, refreshOnboardingStatus, loading: authLoading } = useAuth();
+const { user, refreshOnboardingStatus, loading: authLoading} = useAuth();
+
+const handleSkip = async () => {
+   if(!user) {
+      setError('Please sign in first');
+      return;
+   }
+  setSubmitting(true);
+  setError('');
+
+  try {
+    const result = await skipOnboarding(user.uid)
+    if(result.success) {
+      await refreshOnboardingStatus();
+      window.location.href = '/dashboard';
+      toast.success("Successfully skip onboarding Process")
+    } else {
+        setError(result.error || 'Failed to skip onboarding');
+        toast.error("Failed to skip onboarding")
+    }
+  } catch (error:any) {
+    setError(error.message || 'An error occurred');
+  } finally {
+     setSubmitting(false);
+  }
+}
+
 console.log("UserState",{
      userData: user
 })
@@ -826,7 +858,16 @@ const handleSubmit = async () => {
   }
 
   return (
-    <div className="min-h-screen pb-10 pt-24 px-4">
+    <>
+    <div className="min-h-screen pb-10 pt-24 px-4 relative">
+
+      <Button
+       onClick={() => setOpenSkip(true)}
+       className="absolute right-5 top-5"
+       variant={'ghost'}
+      >
+        Skip 
+      </Button>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -1912,5 +1953,30 @@ const handleSubmit = async () => {
         </Card>
       </div>
     </div>
+
+     <AlertDialog
+          open={openSkip} 
+
+     >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Skip Onboarding</AlertDialogTitle>
+          <AlertDialogDescription>
+          Are you sure you want to skip onboarding? Skipping this step may prevent the chatbot from generating your chat history data.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel
+          className="cursor-pointer"
+          onClick={() => setOpenSkip(false)}
+          >Cancel</AlertDialogCancel>
+          <AlertDialogAction  
+          onClick={handleSkip}
+          className=" text-white cursor-pointer bg-red-500 hover:bg-red-600 ">Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+     </AlertDialog> 
+    </>
   );
 }
