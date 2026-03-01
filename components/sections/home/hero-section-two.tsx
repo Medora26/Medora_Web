@@ -7,8 +7,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import Marquee from "react-fast-marquee"
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth/authContext";
+
 const HeroSectionTwo = () => {
     const {theme} = useTheme()
+    const router = useRouter();
+const { user } = useAuth();
     
   return (
    <div className="flex flex-col items-center justify-center text-center px-4 bg-[url('/images/light-hero-gradient.png')] dark:bg-[url('/images/dark-hero-gradient.png')] bg-no-repeat bg-cover">
@@ -40,13 +45,31 @@ const HeroSectionTwo = () => {
         in one place — private, encrypted, and always available when you need it.
                 </p>
                 <div className="flex flex-col md:flex-row items-center gap-4 mt-8">
-                    <Link href="/sign-up" className="py-3 md:py-2.5 w-full md:w-auto px-8 border  bg-linear-to-tl from-blue-600 to-blue-500 text-white text-center rounded-full">
-                            Get Started
-                        </Link>
-                    <Link href="/sign-in" className="relative py-3 md:py-2.5 w-full md:w-auto px-8  dark:bg-neutral-950 font-medium text-center border  rounded-full">
-                            Start Storing
-                           
-                        </Link>
+<button
+  onClick={() => {
+    if (!user) {
+      router.push("/sign-in");
+    } else {
+      router.push("/onboarding");
+    }
+  }}
+  className="py-3 md:py-2.5 w-full md:w-auto px-8 bg-gradient-to-tl from-blue-600 to-blue-500 text-white text-center rounded-full"
+>
+  Get Started
+</button>
+
+<button
+  onClick={() => {
+    if (!user) {
+      router.push("/sign-in");
+    } else {
+      router.push("/mydrive");
+    }
+  }}
+  className="relative py-3 md:py-2.5 w-full md:w-auto px-8 dark:bg-neutral-950 font-medium text-center border rounded-full"
+>
+  Start Storing
+</button>
                 </div>
                 <h3 className="text-base text-center text-slate-400 mt-14 pb-5 font-medium">
                     Trusting by leading brands, including —
