@@ -166,7 +166,52 @@ export function GridViewCard({
                   Rename
                 </DropdownMenuItem>
               )}
+             
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={() => onDelete(file.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Move to Trash
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+         <div className="absolute -bottom-14 right-4 z-20 md:hidden sm:hidden lg:hidden xs:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur-sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onView(file.id)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDownload(file.cloudinary.url, file.cloudinary.format)}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShareDialog(true)}>
+                <Share2 className="h-4 w-4 mr-2" />
+                {file.isShared ? 'Manage sharing' : 'Share'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStarToggle(file.id, file.isStarred)}>
+                <Star className="h-4 w-4 mr-2" />
+                {file.isStarred ? 'Remove Star' : 'Add Star'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {onRename && (
+                <DropdownMenuItem onClick={() => onRename(file.id)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+              )}
+             
               <DropdownMenuItem 
                 className="text-destructive"
                 onClick={() => onDelete(file.id)}

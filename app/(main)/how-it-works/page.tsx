@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Public } from "@/public/public";
 import { useTheme } from "next-themes";
+import { how_it_works } from "@/public/images/pages/page";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -151,8 +152,33 @@ useEffect(() => {
 
         {/* BLOCK 3 */}
         <div className="py-24 flex flex-col md:flex-row items-center gap-16 reveal">
-          <div className="flex-1">
-            <div className="rounded-2xl h-[360px] backdrop-blur-md border  shadow-xl" />
+         <div className="flex-1 relative">
+            <div className="absolute -top-10 -left-10 w-40 h-40  blur-3xl rounded-full" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40  blur-3xl rounded-full" />
+
+            <div className="relative rounded-xl border shadow-2xl ">
+              <div className="rounded-xl overflow-hidden">
+                {
+                  mounted && theme === 'dark' ? (
+                      <Image
+                  src={how_it_works.DASHBOARD_DARK}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  ) : (
+                      <Image
+                  src={how_it_works.DASHBOARD_LIGHT}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  )
+                }
+              </div>
+            </div>
           </div>
 
           <div className="flex-1">
@@ -169,8 +195,33 @@ useEffect(() => {
 
         {/* BLOCK 4 */}
         <div className="py-24 flex flex-col md:flex-row-reverse items-center gap-16 reveal">
-          <div className="flex-1">
-            <div className="rounded-2xl h-[360px] backdrop-blur-md border  shadow-xl" />
+           <div className="flex-1 relative">
+            <div className="absolute -top-10 -left-10 w-40 h-40  blur-3xl rounded-full" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40  blur-3xl rounded-full" />
+
+            <div className="relative rounded-xl border shadow-2xl ">
+              <div className="rounded-xl overflow-hidden">
+                {
+                  mounted && theme === 'dark' ? (
+                      <Image
+                  src={how_it_works.SHARE_DARK}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  ) : (
+                      <Image
+                  src={how_it_works.SHARE_LIGHT}
+                  alt="Medora homepage"
+                  width={1000}
+                  height={600}
+                  className="w-full"
+                />
+                  )
+                }
+              </div>
+            </div>
           </div>
 
           <div className="flex-1">

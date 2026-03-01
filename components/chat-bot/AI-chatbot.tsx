@@ -491,7 +491,7 @@ I'm here to help you with your **medical history, insurance details, and documen
       )}
       
       <div className={cn(
-        "fixed top-0 right-0 h-full w-[450px] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out",
+        "fixed top-0 right-0 h-full w-96 md:w-[450px] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Header */}

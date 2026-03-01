@@ -288,7 +288,7 @@ const result = await saveCollaborator(formData);
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-3xl md:text-4xl text-center md:text-left font-bold">
-              Got Ideas? We'v got the skills. Let's Team up
+              Got Ideas? We've got the skills. Let's Team up
             </CardTitle>
             <CardDescription className="mt-2">
               Take the first step towards building the future with us

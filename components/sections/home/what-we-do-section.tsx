@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function WhatWeDoSection() {
   return (
-   <section id="what-we-do" className="scroll-mt-12 flex flex-col md:flex-row items-center justify-center gap-20 py-16 px-4 ">
+   <section id="what-we-do" className="scroll-mt-12 flex flex-col md:flex-row items-center justify-center gap-20 md:py-32 py-16 px-4 ">
   
 <div className="relative shrink-0">
 
