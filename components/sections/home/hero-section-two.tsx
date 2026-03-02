@@ -16,7 +16,7 @@ const HeroSectionTwo = () => {
 const { user } = useAuth();
     
   return (
-   <div className="flex flex-col items-center justify-center text-center px-4 bg-[url('/images/light-hero-gradient.png')] dark:bg-[url('/images/dark-hero-gradient.png')] bg-no-repeat bg-cover">
+   <div className="flex flex-col items-center justify-center text-center px-4 bg-[url('/images/light-hero-gradient.png')] dark:bg-[url('/images/dark-hero-gradient.png')]  bg-no-repeat bg-cover">
     <Navbar/>
                 <div className="flex flex-wrap items-center justify-center gap-3 p-1.5 pl-4 pr-4 mt-32 md:mt-36 rounded-full border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-600/20">
                    {/*  <div className="flex items-center -space-x-3">
@@ -74,7 +74,7 @@ const { user } = useAuth();
                 <h3 className="text-base text-center text-slate-400 mt-14 pb-5 font-medium">
                     Trusting by leading brands, including —
                 </h3>
-                <Marquee className="max-w-5xl mx-auto" gradient={true} speed={25} gradientColor={theme === "dark" ? "#000" : "#fff"}>
+                <Marquee className="max-w-5xl mx-auto mb-20" gradient={true} speed={25} gradientColor={theme === "dark" ? "#000" : "#fff"}>
                                   <div className="flex items-center justify-center">
                                        {[...companiesLogo, ...companiesLogo].map((company, index) => (
                                           <Image key={index} className="mx-11" src={company.logo} alt={company.name} width={100} height={100} />
