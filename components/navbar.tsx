@@ -43,6 +43,7 @@ const handleLogout = async () => {
     { name: "Features", href: "/features" },
     { name: "FAQs", href: "/faqs" },
     { name: "Contact-us", href: "/contact-us" },
+    {name: "Testimonials", href: "/testimonials"}
   ];
 
   /* detect scroll */
