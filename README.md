@@ -52,9 +52,9 @@ Your efforts, time, and creativity help push this project forward—thank you! �
       <br />
       <sub>Lead Developer(Full-Stack)</sub>
       <br /><br />
-      <a href="https://github.com/username" target="_blank">GitHub</a> •
-      <a href="https://instagram.com/username" target="_blank">Instagram</a> •
-      <a href="https://linkedin.com/in/username" target="_blank">LinkedIn</a>
+      <a href="https://github.com/IgYaHiko" target="_blank">GitHub</a> •
+      <a href="https://www.instagram.com/_mojo_rojo/" target="_blank">Instagram</a> •
+      <a href="https://www.linkedin.com/in/subhro-kolay-05952328a/" target="_blank">LinkedIn</a>
     </td>
     <td align="center" width="50%">
       <img src="./public/collaborator/rohan.png" height='400' style="border-radius:50%" />
@@ -63,9 +63,9 @@ Your efforts, time, and creativity help push this project forward—thank you! �
       <br />
       <sub>Core Contributor(Full-Stack)</sub>
       <br /><br />
-      <a href="https://github.com/username" target="_blank">GitHub</a> •
-      <a href="https://instagram.com/username" target="_blank">Instagram</a> •
-      <a href="https://linkedin.com/in/username" target="_blank">LinkedIn</a>
+      <a href="https://github.com/rohan24may" target="_blank">GitHub</a> •
+      <a href="https://www.instagram.com/roha_n_._/" target="_blank">Instagram</a> •
+      <a href="https://www.linkedin.com/in/rohan-24may/" target="_blank">LinkedIn</a>
     </td>
   </tr>
 </table>
@@ -198,21 +198,102 @@ Instant synchronization across all devices.
 
 </div>
 
+## 🧪 Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/medora.git
+
+# Navigate into the project
+cd medora
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+---
+
+## 🌍 Deployment
+
+```text
+Hosted on Vercel
+
+Environment variables configured via the Vercel dashboard
+
+Automatic CI/CD enabled from the `main` branch
+```
 
 ## 🔐 Environment Variables
 
+Create a `.env.local` file in the root directory and paste the following:
+
 ```env
-# Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+# ======================================================
+# MEDORA - Environment Configuration
+# Copy this file to `.env.local` and replace values.
+# Never commit your real secrets to GitHub.
+# ======================================================
+
+
+# ======================================================
+# 🔥 Firebase (Client SDK - Safe for Frontend)
+# Used for authentication & client-side Firebase access
+# ======================================================
+
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
-# Cloudinary
+
+# ======================================================
+# 🔐 Firebase Admin (Server-Side Only)
+# Used for secure backend operations
+# DO NOT expose these values to the client
+# ======================================================
+
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_PRIVATE_KEY="your_private_key_here"
+
+
+# ======================================================
+# ☁️ Cloudinary (File Storage & CDN)
+# Handles medical document uploads & delivery
+# ======================================================
+
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+NEXT_PUBLIC_CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
-# App URL
+
+# ======================================================
+# 📧 Resend (Transactional Emails)
+# Used for sharing documents & notifications
+# ======================================================
+
+RESEND_API_KEY=your_resend_api_key
+
+
+# ======================================================
+# 🤖 AI Providers (Optional / Experimental)
+# Used for smart tagging, summaries, and AI features
+# ======================================================
+
+OPENAI_API_KEY=your_openai_api_key
+GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
+
+
+# ======================================================
+# 🌍 App Configuration
+# ======================================================
+
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
