@@ -41,7 +41,7 @@ This wall celebrates the amazing people who have made significant contributions 
 Your efforts, time, and creativity help push this project forward—thank you! 💙
 
 ---
-## 🏆 Top Contributors:
+## 🏆 Top Contributors
 
 <table width="100%">
   <tr>
