@@ -10,6 +10,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { TestimonialFormData, testimonialService } from '@/lib/firebase/service/testimonials/service'
 
 // Register GSAP plugins
 if (typeof window !== 'undefined') {
@@ -126,28 +127,55 @@ export default function TestimonialsPage() {
   }
 
   // Handle form submission (uncommented and ready to use)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      // Simulate submission for now
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      toast.success('Thank you for your feedback!', {
-        description: 'Your testimonial has been submitted successfully.',
-        icon: '🎉',
-      })
-      
-      router.push('/')
-    } catch (error) {
-      toast.error('Something went wrong', {
-        description: 'Please try again later.',
-      })
-    } finally {
-      setLoading(false)
-    }
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  
+  // Validate form data
+  const testimonialData: TestimonialFormData = {
+    ...formData,
+    imageFile: imageFile || undefined
   }
+
+  const validationError = testimonialService.validateTestimonialData(testimonialData)
+  if (validationError) {
+    toast.error(validationError)
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    // Submit testimonial using the service
+    const result = await testimonialService.submitTestimonial(testimonialData)
+    
+    toast.success('Thank you for your feedback!', {
+      description: 'Your testimonial has been submitted for review.',
+      icon: '🎉',
+    })
+    
+    // Reset form
+    setFormData({
+      name: '',
+      about: '',
+      review: '',
+      rating: 5
+    })
+    removeImage()
+    
+    // Redirect after successful submission
+    setTimeout(() => {
+      router.push('/')
+    }, 2000)
+    
+  } catch (error: any) {
+    console.error('Submission error:', error)
+    toast.error('Failed to submit testimonial', {
+      description: error.message || 'Please try again later.',
+    })
+  } finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div className="min-h-screen  py-16 px-4 sm:px-6 lg:px-8">
