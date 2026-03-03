@@ -348,7 +348,10 @@ const SignUp = () => {
                   className="h-4 w-4 mb-1 text-blue-600 rounded disabled:opacity-50"
                 />
                 <p className='font-medium text-xs'>
-                  I agree to Medora's <span className='text-blue-400 font-semibold'>Terms & Conditions</span> 
+                  I agree to Medora's <Link
+                   href={"/terms"}
+                  >
+                  <span className='text-blue-400 font-semibold hover:underline'>Terms & Conditions</span></Link>
                 </p>
               </div>
             </div>
