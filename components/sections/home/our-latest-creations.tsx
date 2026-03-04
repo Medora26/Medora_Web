@@ -1,44 +1,47 @@
+'use client'
 import SectionTitle from "@/components/section-title";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
+import { cn } from "@/lib/utils";
 import { HOMEPAGE } from "@/public/images/images";
+import { Public } from "@/public/public";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 
 export default function OurLatestCreations() {
-
-  const data = [
-    {
-      title: 'Digital Prescriptions',
-      description: 'Store and access prescriptions securely anytime without worrying about losing paper records.',
-      image: HOMEPAGE.ONE,
-    },
-    {
-      title: 'Lab Reports & Scans',
-      description: 'Keep all medical reports, scans, and test results organized in one safe digital place.',
-      image: HOMEPAGE.TWO,
-    },
-    {
-      title: 'Health History Timeline',
-      description: 'Track treatments, diagnoses, and doctor visits with a complete medical history timeline.',
-      image: HOMEPAGE.THREE,
-    },
-  ];
+ const {theme} = useTheme()
 
   return (
-    <section  id="creations" className="scroll-mt-12 flex flex-col items-center justify-center py-16  text-black">
-
-      <SectionTitle
-        title="Medical Records in One Place"
-        subtitle="Everything you need to manage prescriptions, reports, and health history — securely and instantly."
-      />
-
-      <div className="flex flex-wrap items-center justify-center gap-10 mt-12">
-        {data.map((item, index) => (
-          <div key={index} className="max-w-80 hover:-translate-y-0.5 transition duration-300">
-            <Image className="rounded-xl" src={item.image} alt={item.title} />
-            <h3 className="text-base font-semibold text-slate-700 mt-4">{item.title}</h3>
-            <p className="text-sm text-gray-500 mt-1">{item.description}</p>
-          </div>
-        ))}
-      </div>
+    <section  id="creations" className="scroll-mt-12 flex flex-col items-center justify-center   text-black">
+     <div className="flex flex-col overflow-hidden">
+      <ContainerScroll
+        titleComponent={
+          <>
+            <h1 className="text-4xl font-semibold text-black dark:text-white">
+             Your Most Sensitive Data. <br />
+              <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                Perfectly Protected.
+              </span>
+            </h1>
+          </>
+        }
+      >
+        <Image
+          src={
+             theme === 'dark' ? Public.DASHBOARD_DARK : Public.DASHBOARD_LIGHT
+          }
+          alt="hero"
+          height={720}
+          width={1400}
+          className={
+            cn(
+              'mx-auto rounded-2xl object-contain h-full', 
+              theme === 'light' ? "bg-white" : "bg-black"
+            )
+          }
+          draggable={false}
+        />
+      </ContainerScroll>
+    </div>
     </section>
   );
 }

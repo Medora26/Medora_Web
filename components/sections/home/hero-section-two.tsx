@@ -9,6 +9,7 @@ import React from 'react'
 import Marquee from "react-fast-marquee"
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/authContext";
+import { EncryptedText } from '@/components/ui/encrypted-text'
 
 const HeroSectionTwo = () => {
     const {theme} = useTheme()
@@ -41,9 +42,17 @@ const { user } = useAuth();
         in one place.
                 </p>
                 <p className="text-xs hidden md:block md:text-base dark:text-slate-300  max-w-xl font-semibold mt-4">
+                   
                     Medora helps you securely manage prescriptions, lab reports, and health history
-        in one place — private, encrypted, and always available when you need it.
+        in one place — private, encrypted, and always 
+        <EncryptedText
+        text="available when you need it."
+        encryptedClassName="text-neutral-500"
+        revealedClassName="dark:text-white text-black"
+        revealDelayMs={50}
+      />
                 </p>
+                
                 <div className="flex flex-col md:flex-row items-center gap-4 mt-8">
 <button
   onClick={() => {
