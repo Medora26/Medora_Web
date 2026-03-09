@@ -25,7 +25,7 @@
 </div>
 
 
-# 🏠 Home Page Preview:
+# 🏠 Home Page Preview
 
 <div align="center">
    <img src="./public/dark.png" alt="MEDORA Dark Mode" />
