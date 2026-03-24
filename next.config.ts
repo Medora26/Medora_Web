@@ -12,15 +12,15 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
        {
-                protocol: 'https',
-                hostname: 'images.unsplash.com',
-                pathname: '**',
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '**',
       },
        {
-                protocol: 'https',
-                hostname: 'raw.githubusercontent.com',
-                pathname: '**',
-            },
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        pathname: '**',
+      },
     ],
   },
 };

@@ -17,7 +17,7 @@ const HeroSectionTwo = () => {
 const { user } = useAuth();
     
   return (
-   <div className="flex flex-col items-center justify-center text-center px-4 bg-[url('/images/light-hero-gradient.png')] dark:bg-[url('/images/dark-hero-gradient.png')]  bg-no-repeat bg-cover">
+   <div className="flex flex-col items-center justify-center text-center px-4 dark:bg-[url('/images/dark-b.png')] bg-[url('/images/light-b.png')]  bg-no-repeat bg-cover">
     <Navbar/>
                 <div className="flex flex-wrap items-center justify-center gap-3 p-1.5 pl-4 pr-4 mt-32 md:mt-36 rounded-full border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-600/20">
                    {/*  <div className="flex items-center -space-x-3">
@@ -35,7 +35,7 @@ const { user } = useAuth();
                 </div>
                 <h1 className="mt-2 text-4xl md:text-[64px]/19 font-semibold max-w-4xl">
                     Access Your Medical Record, Anytime,{" "}
-                    <span className="bg-gradient-to-r  from-blue-600 dark:from-blue-600 to-blue-700 dark:to-blue-200 bg-clip-text text-transparent"> Anywhere</span>
+                    <span className="bg-gradient-to-r  from-blue-600 dark:from-blue-600 to-blue-700 dark:to-blue-400 bg-clip-text text-transparent"> Anywhere</span>
                 </h1>
                  <p className="text-xs md:hidden sm:hidden xl:hidden  md:text-base dark:text-slate-300  max-w-xs font-semibold mt-4">
                     Medora helps you securely manage prescriptions, lab reports, and health history

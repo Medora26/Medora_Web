@@ -181,7 +181,7 @@ const AppSidebar = () => {
   const handleSignOut = async () => {
       try {
         await signOutUser();
-        // Clear selected patient on logout
+        // Clear selected patient on 2logout
         localStorage.removeItem('selectedPatientId');
         window.location.href = "/sign-in";
         toast.success(`${currentUserData?.displayName} logout successfully`);
