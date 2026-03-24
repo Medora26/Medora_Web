@@ -80,10 +80,10 @@ const { user } = useAuth();
   Start Storing
 </button>
                 </div>
-                <h3 className="text-base text-center text-slate-400 mt-14 pb-5 font-medium">
+                <h3 className="text-base text-center  text-slate-400 mt-28 pb-5 font-medium">
                     Trusting by leading brands, including —
                 </h3>
-                <Marquee className="max-w-5xl mx-auto mb-20" gradient={true} speed={25} gradientColor={theme === "dark" ? "#000" : "#fff"}>
+                <Marquee className="max-w-3xl mt-5 mx-auto mb-20" gradient={true} speed={25} gradientColor={theme === "dark" ? "#000" : "#fff"}>
                                   <div className="flex items-center justify-center">
                                        {[...companiesLogo, ...companiesLogo].map((company, index) => (
                                           <Image key={index} className="mx-11" src={company.logo} alt={company.name} width={100} height={100} />
