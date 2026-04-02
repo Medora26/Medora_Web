@@ -4,11 +4,15 @@ import DARK_ONBOARDING from "../public/onboarding.png"
 import LIGHT_ONBOARDING from "../public/light-on.png"
 import DASHBOARD_DARK from './dash-dark.png'
 import DASHBOARD_LIGHT from "./dash-light.png"
+import Chat_Dark from "./chat-dark.png"
+import Chat_Light from "./chat-light.png"
 export const Public = {
    DARK,
    LIGHT,
    DARK_ONBOARDING,
    LIGHT_ONBOARDING,
    DASHBOARD_DARK,
-   DASHBOARD_LIGHT
+   DASHBOARD_LIGHT,
+   Chat_Dark,
+   Chat_Light
 }
