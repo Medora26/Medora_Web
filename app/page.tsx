@@ -9,6 +9,7 @@ import Newsletter from "@/components/sections/home/newsletter"
 import HeroSectionTwo from "@/components/sections/home/hero-section-two";
 import { ThreeDMarquee } from "@/components/ui/3d-marquee";
 import ThreeMarquee from "@/components/sections/home/components/three-d-marquee";
+import TimelinePage from "@/components/sections/home/timeline";
 export default function Home() {
   return (
     <>
@@ -20,6 +21,7 @@ export default function Home() {
         <WhatWeDoSection />
         <OurLatestCreations />
         <ThreeMarquee/>
+        <TimelinePage />
         <OurTestimonialSection />
         <FaqSection />
         <Newsletter />

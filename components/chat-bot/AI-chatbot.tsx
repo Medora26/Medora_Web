@@ -222,7 +222,7 @@ const AIChatBox = ({ isOpen, onClose }: AIChatBoxProps) => {
   }
 }, [user]);
 
-useEffect(() => {
+useEffect(() => { 
   if (user) {
     // Load today's chat history when user logs in
     loadHistory().then(historyMessages => {
