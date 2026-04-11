@@ -24,7 +24,7 @@ export default function TestimonialsPage() {
     name: '',
     about: '',
     review: '',
-    rating: 5
+    rating: 53
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -42,7 +42,7 @@ export default function TestimonialsPage() {
   useEffect(() => {
     // Create animation timeline
     const tl = gsap.timeline({
-      scrollTrigger: {
+      scrollTrigger: { 
         trigger: formRef.current,
         start: 'top 80%',
         end: 'bottom 20%',
